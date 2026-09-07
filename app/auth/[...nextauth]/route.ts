@@ -3,8 +3,19 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "../../../lib/db";
 import bcrypt from "bcryptjs";
+import type { DefaultSession, NextAuthOptions } from "next-auth";
 
-export const authOptions = {
+declare module "next-auth" {
+  interface Session {
+    user: DefaultSession["user"] & {
+      id: string;
+      role: string;
+      workspaceId: string;
+    };
+  }
+}
+
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
@@ -35,9 +46,9 @@ export const authOptions = {
           where: { id: token.sub },
         });
         if (dbUser) {
-          (session.user as any).id = dbUser.id;
-          (session.user as any).role = dbUser.role;
-          (session.user as any).workspaceId = dbUser.workspaceId;
+          session.user.id = dbUser.id;
+          session.user.role = dbUser.role;
+          session.user.workspaceId = dbUser.workspaceId;
         }
       }
       return session;
@@ -55,4 +66,6 @@ export const authOptions = {
   },
 };
 
-export default NextAuth(authOptions);
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };

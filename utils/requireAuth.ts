@@ -7,6 +7,6 @@ export async function requireAuth() {
   if (!session?.user) {
     throw new AppError("Authentication required", 401);
   }
-  return session.user;
+  return session.user as { id: string; name?: string | null; email?: string | null; role: string; workspaceId: string };
 }
 

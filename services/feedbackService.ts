@@ -1,7 +1,15 @@
 import { prisma } from "../lib/db";
 import { feedbackCreateSchema } from "../lib/validation/feedback";
 import { z } from "zod";
-import { Role } from "@prisma/client";
+
+// Allow-listed sort fields per File 04 Section 26
+const ALLOWED_SORT_FIELDS: Record<string, string> = {
+  createdAt: 'createdAt',
+  sentiment: 'sentiment',
+  status: 'status',
+  channel: 'channel',
+  updatedAt: 'updatedAt',
+};
 
 // List feedback with filtering, pagination, and sorting
 export async function listFeedback(params: {
@@ -24,7 +32,8 @@ export async function listFeedback(params: {
   if (status) where.status = status;
   if (featureArea) where.featureArea = { contains: featureArea, mode: "insensitive" };
   const orderBy: any = {};
-  if (sort) orderBy[sort] = order ?? "desc";
+  const safeSortField = sort && ALLOWED_SORT_FIELDS[sort] ? ALLOWED_SORT_FIELDS[sort] : 'createdAt';
+  orderBy[safeSortField] = order ?? 'desc';
   const [total, data] = await Promise.all([
     prisma.feedback.count({ where }),
     prisma.feedback.findMany({
