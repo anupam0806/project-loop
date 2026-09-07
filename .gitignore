@@ -1,5 +1,5 @@
 # Node.js
-node_modules/
+node_modules//
 # Next.js build output
 .next/
 # Environment files
@@ -9,7 +9,7 @@ node_modules/
 # Prisma generated files
 prisma/*.db
 prisma/*.sqlite
-prisma/migrations/
+
 # Tailwind CSS cache
 public/.cache/
 # Log files
@@ -28,3 +28,4 @@ temp/
 # Production build artifacts (if any)
 build/
 out/
+node_modules/
