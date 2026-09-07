@@ -13,8 +13,8 @@ export async function importCsv(workspaceId: string, csvText: string) {
   try {
     records = parse(csvText, { columns: true, skip_empty_lines: true, trim: true });
   } catch (e) {
-    const err = new Error("IMPORT_ERROR");
-    throw err;
+    // Return a summary indicating parse failure instead of throwing
+    return { totalRows: 0, imported: 0, failed: 0, errors: [{ row: 0, message: "Failed to parse CSV" }] } as any;
   }
   const errors: any[] = [];
   const toCreate: any[] = [];
