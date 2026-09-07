@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { prisma } from "../lib/db";
+import { prisma } from "../../../lib/db";
 import bcrypt from "bcryptjs";
 
 export const authOptions = {
@@ -31,14 +31,13 @@ export const authOptions = {
   callbacks: {
     async session({ session, token }) {
       if (session.user && token.sub) {
-        // token.sub is user id
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
         });
         if (dbUser) {
-          session.user.id = dbUser.id;
-          session.user.role = dbUser.role;
-          session.user.workspaceId = dbUser.workspaceId;
+          (session.user as any).id = dbUser.id;
+          (session.user as any).role = dbUser.role;
+          (session.user as any).workspaceId = dbUser.workspaceId;
         }
       }
       return session;

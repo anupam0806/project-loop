@@ -38,16 +38,18 @@ enum Role {
   VIEWER
 }
 
-model Workspace {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  users     User[]
-  feedbacks Feedback[]
-  themes    Theme[]
-  reports   Report[]
-}
+  model Workspace {
+    id        String   @id @default(uuid())
+    name      String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    users     User[]
+    feedbacks Feedback[]
+    themes    Theme[]
+    reports   Report[]
+    embeddings Embedding[]
+  }
+
 
 model User {
   id           String   @id @default(uuid())
@@ -74,7 +76,9 @@ model Feedback {
   updatedAt        DateTime @updatedAt
   workspace        Workspace @relation(fields: [workspaceId], references: [id])
   themes           FeedbackTheme[]
-  embedding        Embedding?
+  embeddings       Embedding[]
+
+
 }
 
 model Theme {

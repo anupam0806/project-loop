@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/auth/[...nextauth]/route";
-import { AppError } from "@/utils/AppError";
+import { authOptions } from "../../app/auth/[...nextauth]/route";
+import { AppError } from "../utils/AppError";
 
 export async function requireAuth() {
   const session = await getServerSession(authOptions);
