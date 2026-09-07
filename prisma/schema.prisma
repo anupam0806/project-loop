@@ -1,0 +1,123 @@
+// Prisma schema for Project LOOP
+// Includes all required entities and pgvector embedding column
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Channel {
+  SUPPORT
+  APP_REVIEW
+  SURVEY
+  SALES
+  SOCIAL
+  SIMULATED
+}
+
+enum Sentiment {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+  MIXED
+}
+
+enum FeedbackStatus {
+  NEW
+  REVIEWED
+  ACTIONED
+}
+
+enum Role {
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+  feedbacks Feedback[]
+  themes    Theme[]
+  reports   Report[]
+}
+
+model User {
+  id           String   @id @default(uuid())
+  workspaceId  String
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  workspace    Workspace @relation(fields: [workspaceId], references: [id])
+}
+
+model Feedback {
+  id               String          @id @default(uuid())
+  workspaceId      String
+  text             String
+  channel          Channel
+  sentiment        Sentiment?
+  sentimentScore  Float?
+  featureArea      String?
+  status           FeedbackStatus @default(NEW)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  workspace        Workspace @relation(fields: [workspaceId], references: [id])
+  themes           FeedbackTheme[]
+  embedding        Embedding?
+}
+
+model Theme {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  feedbacks   FeedbackTheme[]
+}
+
+model FeedbackTheme {
+  feedbackId String
+  themeId    String
+  confidence Float
+  createdAt  DateTime @default(now())
+  feedback   Feedback @relation(fields: [feedbackId], references: [id])
+  theme      Theme    @relation(fields: [themeId], references: [id])
+  @@id([feedbackId, themeId])
+}
+
+model Embedding {
+  id          String   @id @default(uuid())
+  workspaceId String
+  feedbackId  String
+  model       String
+  dimensions  Int
+  vector      Unsupported("vector(384)") // pgvector column, dimension 384 for all‑MiniLM‑L6‑v2
+  createdAt   DateTime @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  feedback    Feedback  @relation(fields: [feedbackId], references: [id])
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  workspaceId String
+  title       String
+  periodStart DateTime
+  periodEnd   DateTime
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+}

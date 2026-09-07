@@ -1,0 +1,30 @@
+# Node.js
+node_modules/
+# Next.js build output
+.next/
+# Environment files
+.env
+.env.local
+.env.*.local
+# Prisma generated files
+prisma/*.db
+prisma/*.sqlite
+prisma/migrations/
+# Tailwind CSS cache
+public/.cache/
+# Log files
+*.log
+# OS files
+.DS_Store
+Thumbs.db
+# IDE/editor files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+# Temporary files
+tmp/
+temp/
+# Production build artifacts (if any)
+build/
+out/
