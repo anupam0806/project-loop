@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../app/auth/[...nextauth]/route";
+import { authOptions } from "../app/auth/[...nextauth]/route";
 import { AppError } from "../utils/AppError";
 
 export async function requireAuth() {
@@ -9,3 +9,4 @@ export async function requireAuth() {
   }
   return session.user;
 }
+
