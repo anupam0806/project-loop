@@ -1,10 +1,11 @@
 # Node.js
-node_modules//
+node_modules/
 # Next.js build output
 .next/
 # Environment files
 .env
 .env.local
+.env*.local
 .env.*.local
 # Prisma generated files
 prisma/*.db
