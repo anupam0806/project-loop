@@ -30,3 +30,13 @@ temp/
 build/
 out/
 node_modules/
+*.tsbuildinfo
+
+# Specification / Plan docs
+0[1-6]-*.md
+
+# AI assistant configs
+.agents/
+.claude/
+.cursor/
+.devin/
