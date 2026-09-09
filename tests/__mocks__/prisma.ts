@@ -10,6 +10,7 @@ let themeStore: any[] = [];
 let workspaceStore: any[] = [];
 let feedbackThemeStore: any[] = [];
 let userStore: any[] = [];
+let embeddingStore: any[] = [];
 
 export function resetStores() {
   feedbackStore = [];
@@ -17,6 +18,7 @@ export function resetStores() {
   workspaceStore = [];
   feedbackThemeStore = [];
   userStore = [];
+  embeddingStore = [];
   idCounter = 1;
 }
 
@@ -45,6 +47,10 @@ function matchesWhere(item: any, where: any): boolean {
         } else {
           if (!val.includes(condition.contains)) return false;
         }
+        continue;
+      }
+      if ('not' in condition) {
+        if (item[key] === condition.not) return false;
         continue;
       }
     }
@@ -134,11 +140,11 @@ function createModelMock(store: () => any[], setStore: (s: any[]) => void) {
     }),
     delete: vi.fn(async (args: any) => {
       const s = store();
-      const idx = s.findIndex((i: any) => i.id === args.where.id);
+      const idx = s.findIndex((i: any) => matchesWhere(i, args.where));
       if (idx === -1) throw new Error('Record not found');
-      const [item] = s.splice(idx, 1);
+      const deleted = s.splice(idx, 1)[0];
       setStore(s);
-      return item;
+      return { ...deleted };
     }),
     deleteMany: vi.fn(async (args: any = {}) => {
       if (!args.where) {
@@ -156,6 +162,26 @@ function createModelMock(store: () => any[], setStore: (s: any[]) => void) {
       if (!args.where) return store().length;
       return store().filter((item: any) => matchesWhere(item, args.where)).length;
     }),
+    groupBy: vi.fn(async (args: any) => {
+      const s = store();
+      let filtered = s;
+      if (args.where) {
+        filtered = s.filter((item: any) => matchesWhere(item, args.where));
+      }
+      const byField = args.by[0];
+      const groups = new Map();
+      for (const item of filtered) {
+        const val = item[byField];
+        if (!groups.has(val)) {
+          groups.set(val, { [byField]: val, _count: { _all: 0 } });
+        }
+        if (args._count) {
+          const g = groups.get(val);
+          g._count._all++;
+        }
+      }
+      return Array.from(groups.values());
+    }),
   };
 }
 
@@ -164,6 +190,7 @@ const mockTheme = createModelMock(() => themeStore, (s) => { themeStore = s; });
 const mockWorkspace = createModelMock(() => workspaceStore, (s) => { workspaceStore = s; });
 const mockFeedbackTheme = createModelMock(() => feedbackThemeStore, (s) => { feedbackThemeStore = s; });
 const mockUser = createModelMock(() => userStore, (s) => { userStore = s; });
+const mockEmbedding = createModelMock(() => embeddingStore, (s) => { embeddingStore = s; });
 
 export const mockPrisma = {
   feedback: mockFeedback,
@@ -171,6 +198,35 @@ export const mockPrisma = {
   workspace: mockWorkspace,
   feedbackTheme: mockFeedbackTheme,
   user: mockUser,
+  embedding: mockEmbedding,
+  $queryRaw: vi.fn(async (strings: any, ...values: any[]) => {
+    // Mock analytics and RAG raw queries
+    const query = Array.isArray(strings) ? strings.join('?') : strings?.strings?.join('?') || strings;
+    if (query.includes('volumeOverTime') || query.includes('COUNT(*)') && !query.includes('sentiment IS NOT NULL')) {
+      // Mock volume by date
+      return [ { date: new Date().toISOString().split('T')[0], count: BigInt(feedbackStore.length) } ];
+    }
+    if (query.includes('sentiment IS NOT NULL')) {
+      // Mock sentiment over time
+      return [ { date: new Date().toISOString().split('T')[0], sentiment: 'POSITIVE', count: BigInt(feedbackStore.filter(f => f.sentiment === 'POSITIVE').length) } ];
+    }
+    if (query.includes('distance')) {
+      // Mock RAG vector search
+      return embeddingStore.map(e => {
+        const fb = feedbackStore.find(f => f.id === e.feedbackId);
+        return {
+          feedbackId: e.feedbackId,
+          distance: 0.1,
+          text: fb?.text || "",
+          channel: fb?.channel || "SUPPORT"
+        };
+      });
+    }
+    return [];
+  }),
+  $executeRaw: vi.fn(async () => {
+    return 1;
+  }),
   $transaction: vi.fn(async (args: any) => {
     if (Array.isArray(args)) {
       const results = [];

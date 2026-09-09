@@ -1,6 +1,8 @@
 import { prisma } from "../lib/db";
 import { feedbackCreateSchema } from "../lib/validation/feedback";
 import { z } from "zod";
+import { classifyAndAssignThemes } from "./ai/classificationService";
+import { embedAndPersist } from "./ai/embeddingService";
 
 // Allow-listed sort fields per File 04 Section 26
 const ALLOWED_SORT_FIELDS: Record<string, string> = {
@@ -70,6 +72,19 @@ export async function createFeedback(workspaceId: string, payload: any) {
     data: { workspaceId, text, channel, featureArea },
     select: { id: true, text: true, channel: true, status: true, featureArea: true, createdAt: true },
   });
+
+  try {
+    await classifyAndAssignThemes(workspaceId, feedback.id, feedback.text);
+  } catch (err) {
+    console.warn(`Classification failed for feedback ${feedback.id}:`, err);
+  }
+
+  try {
+    await embedAndPersist(workspaceId, feedback.id, feedback.text);
+  } catch (err) {
+    console.warn(`Embedding failed for feedback ${feedback.id}:`, err);
+  }
+
   return feedback;
 }
 

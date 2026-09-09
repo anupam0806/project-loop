@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "../app/auth/[...nextauth]/route";
+import { authOptions } from "../lib/authOptions";
 import { AppError } from "../utils/AppError";
 
 export async function requireAuth() {

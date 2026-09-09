@@ -9,6 +9,9 @@ const nextConfig = {
     // Linting is done independently
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    serverComponentsExternalPackages: ['@xenova/transformers', 'onnxruntime-node', 'sharp'],
+  },
 };
 
 export default nextConfig;
