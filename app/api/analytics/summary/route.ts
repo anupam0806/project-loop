@@ -4,7 +4,10 @@ import { requireRole } from '../../../../utils/requireRole';
 import { getAnalyticsSummary } from '../../../../services/analyticsService';
 import { AppError } from '../../../../utils/AppError';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
+
   try {
     const user = await requireRole('ADMIN', 'ANALYST', 'VIEWER');
     

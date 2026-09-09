@@ -56,3 +56,7 @@ node_modules/
 *implementation*.md
 phase-*.md
 *-phase-*.md
+
+# Test coverage
+coverage/
+

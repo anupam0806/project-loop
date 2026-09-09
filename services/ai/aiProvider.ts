@@ -17,7 +17,46 @@ export interface AskLoopResponse {
   confidence: 'supported' | 'insufficient_evidence';
 }
 
+export interface ReportEvidence {
+  id: string;
+  text: string;
+  channel: string;
+  sentiment?: string | null;
+}
+
+export interface ReportNarrativeInput {
+  title?: string;
+  period: { from: string; to: string };
+
+  statistics: {
+    totalFeedback: number;
+    positiveCount: number;
+    negativeCount: number;
+    neutralCount: number;
+    mixedCount: number;
+    positivePercentage: number;
+    negativePercentage: number;
+    channelCounts: Record<string, number>;
+    topThemes: Array<{ name: string; count: number }>;
+    sentimentDelta?: {
+      positiveChange: number;
+      negativeChange: number;
+    };
+  };
+  evidence: ReportEvidence[];
+}
+
+export interface ReportNarrativeResult {
+  summary: string;
+  keyThemes: Array<{ name: string; observation: string }>;
+  sentimentTrends: string;
+  recommendations: string[];
+  quotes: Array<{ feedbackId: string; quote: string }>;
+}
+
 export interface AIProvider {
   classifyFeedback(text: string, context?: { featureArea?: string }): Promise<ClassificationResult>;
   askLoop(prompt: string, context: { question: string; evidence: Array<{ id: string; text: string; channel: string }> }): Promise<AskLoopResponse>;
+  generateReportNarrative(input: ReportNarrativeInput): Promise<ReportNarrativeResult>;
 }
+

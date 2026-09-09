@@ -7,8 +7,34 @@ const themeCreateSchema = z.object({
 });
 
 export async function listThemes(workspaceId: string) {
-  return prisma.theme.findMany({ where: { workspaceId }, select: { id: true, name: true, description: true, createdAt: true } });
+  const themes = await prisma.theme.findMany({
+    where: { workspaceId },
+    select: { id: true, name: true, description: true, createdAt: true },
+  });
+
+  const feedbackThemes = await prisma.feedbackTheme.findMany({
+    where: { theme: { workspaceId } },
+    include: { feedback: { select: { sentiment: true } } },
+  }).catch(() => []);
+
+  return themes.map(t => {
+    const matched = feedbackThemes.filter((ft: any) => ft.themeId === t.id);
+    let positive = 0, negative = 0, neutral = 0, mixed = 0;
+    for (const m of matched) {
+      const sent = m.feedback?.sentiment;
+      if (sent === 'POSITIVE') positive++;
+      else if (sent === 'NEGATIVE') negative++;
+      else if (sent === 'NEUTRAL') neutral++;
+      else if (sent === 'MIXED') mixed++;
+    }
+    return {
+      ...t,
+      feedbackCount: matched.length,
+      sentiments: { positive, negative, neutral, mixed },
+    };
+  });
 }
+
 
 export async function getTheme(workspaceId: string, id: string) {
   return prisma.theme.findFirst({ where: { id, workspaceId }, select: { id: true, name: true, description: true, createdAt: true } });

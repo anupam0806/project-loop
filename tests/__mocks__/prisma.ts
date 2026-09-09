@@ -11,6 +11,7 @@ let workspaceStore: any[] = [];
 let feedbackThemeStore: any[] = [];
 let userStore: any[] = [];
 let embeddingStore: any[] = [];
+let reportStore: any[] = [];
 
 export function resetStores() {
   feedbackStore = [];
@@ -19,12 +20,15 @@ export function resetStores() {
   feedbackThemeStore = [];
   userStore = [];
   embeddingStore = [];
+  reportStore = [];
   idCounter = 1;
 }
 
 export function getFeedbackStore() { return feedbackStore; }
 export function getThemeStore() { return themeStore; }
 export function getWorkspaceStore() { return workspaceStore; }
+export function getReportStore() { return reportStore; }
+
 
 let idCounter = 1;
 function genId() { return `test-id-${idCounter++}`; }
@@ -53,11 +57,32 @@ function matchesWhere(item: any, where: any): boolean {
         if (item[key] === condition.not) return false;
         continue;
       }
+      if ('gte' in condition || 'lte' in condition || 'gt' in condition || 'lt' in condition) {
+        const itemVal = item[key] instanceof Date ? item[key].getTime() : item[key];
+        if ('gte' in condition) {
+          const target = condition.gte instanceof Date ? condition.gte.getTime() : condition.gte;
+          if (itemVal < target) return false;
+        }
+        if ('lte' in condition) {
+          const target = condition.lte instanceof Date ? condition.lte.getTime() : condition.lte;
+          if (itemVal > target) return false;
+        }
+        if ('gt' in condition) {
+          const target = condition.gt instanceof Date ? condition.gt.getTime() : condition.gt;
+          if (itemVal <= target) return false;
+        }
+        if ('lt' in condition) {
+          const target = condition.lt instanceof Date ? condition.lt.getTime() : condition.lt;
+          if (itemVal >= target) return false;
+        }
+        continue;
+      }
     }
     if (item[key] !== where[key]) return false;
   }
   return true;
 }
+
 
 function applySelect(item: any, select: any): any {
   if (!select) return { ...item };
@@ -107,10 +132,10 @@ function createModelMock(store: () => any[], setStore: (s: any[]) => void) {
       const now = new Date();
       const item = {
         id: genId(),
-        ...args.data,
-        createdAt: now,
-        updatedAt: now,
+        createdAt: args.data.createdAt || now,
+        updatedAt: args.data.updatedAt || now,
         status: args.data.status || 'NEW',
+        ...args.data,
       };
       const s = store();
       s.push(item);
@@ -121,15 +146,16 @@ function createModelMock(store: () => any[], setStore: (s: any[]) => void) {
       const now = new Date();
       const items = args.data.map((d: any) => ({
         id: genId(),
+        createdAt: d.createdAt || now,
+        updatedAt: d.updatedAt || now,
         ...d,
-        createdAt: now,
-        updatedAt: now,
       }));
       const s = store();
       s.push(...items);
       setStore(s);
       return { count: items.length };
     }),
+
     update: vi.fn(async (args: any) => {
       const s = store();
       const idx = s.findIndex((i: any) => i.id === args.where.id);
@@ -191,6 +217,7 @@ const mockWorkspace = createModelMock(() => workspaceStore, (s) => { workspaceSt
 const mockFeedbackTheme = createModelMock(() => feedbackThemeStore, (s) => { feedbackThemeStore = s; });
 const mockUser = createModelMock(() => userStore, (s) => { userStore = s; });
 const mockEmbedding = createModelMock(() => embeddingStore, (s) => { embeddingStore = s; });
+const mockReport = createModelMock(() => reportStore, (s) => { reportStore = s; });
 
 export const mockPrisma = {
   feedback: mockFeedback,
@@ -199,6 +226,8 @@ export const mockPrisma = {
   feedbackTheme: mockFeedbackTheme,
   user: mockUser,
   embedding: mockEmbedding,
+  report: mockReport,
+
   $queryRaw: vi.fn(async (strings: any, ...values: any[]) => {
     // Mock analytics and RAG raw queries
     const query = Array.isArray(strings) ? strings.join('?') : strings?.strings?.join('?') || strings;

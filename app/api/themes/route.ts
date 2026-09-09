@@ -5,7 +5,10 @@ import { Role } from '@prisma/client';
 import { z } from 'zod';
 import { listThemes, createTheme } from '../../../services/themeService';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
+
   const sessionUser = await requireAuth();
   const workspaceId = (sessionUser as any).workspaceId;
   const themes = await listThemes(workspaceId);

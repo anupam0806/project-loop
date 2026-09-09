@@ -139,4 +139,27 @@ describe('RBAC - Permission Matrix (File 04 Section 6)', () => {
     mockSession.mockResolvedValue(mockUser('VIEWER'));
     await expect(requireRole('ADMIN' as any)).rejects.toThrow();
   });
+
+  it('Report generate: ADMIN=yes, ANALYST=yes, VIEWER=no', async () => {
+    mockSession.mockResolvedValue(mockUser('ADMIN'));
+    await expect(requireRole('ADMIN' as any, 'ANALYST' as any)).resolves.toBeDefined();
+
+    mockSession.mockResolvedValue(mockUser('ANALYST'));
+    await expect(requireRole('ADMIN' as any, 'ANALYST' as any)).resolves.toBeDefined();
+
+    mockSession.mockResolvedValue(mockUser('VIEWER'));
+    await expect(requireRole('ADMIN' as any, 'ANALYST' as any)).rejects.toThrow();
+  });
+
+  it('Report view: ADMIN=yes, ANALYST=yes, VIEWER=yes', async () => {
+    mockSession.mockResolvedValue(mockUser('ADMIN'));
+    await expect(requireRole('ADMIN' as any, 'ANALYST' as any, 'VIEWER' as any)).resolves.toBeDefined();
+
+    mockSession.mockResolvedValue(mockUser('ANALYST'));
+    await expect(requireRole('ADMIN' as any, 'ANALYST' as any, 'VIEWER' as any)).resolves.toBeDefined();
+
+    mockSession.mockResolvedValue(mockUser('VIEWER'));
+    await expect(requireRole('ADMIN' as any, 'ANALYST' as any, 'VIEWER' as any)).resolves.toBeDefined();
+  });
 });
+

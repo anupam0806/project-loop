@@ -7,10 +7,10 @@ import { Role } from '@prisma/client';
 import { z } from 'zod';
 import { listFeedback, createFeedback } from '../../../services/feedbackService';
 
-// Query validation schema (moved to validation file)
-// const feedbackListQuerySchema = z.object({ ... })
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+
   const url = new URL(request.url);
   const sessionUser = await requireAuth();
   const workspaceId = (sessionUser as any).workspaceId;

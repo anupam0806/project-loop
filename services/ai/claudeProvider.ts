@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { AIProvider, ClassificationResult, AskLoopResponse } from './aiProvider';
+import { AIProvider, ClassificationResult, AskLoopResponse, ReportNarrativeInput, ReportNarrativeResult } from './aiProvider';
 import { classificationResultSchema, askLoopResponseSchema } from '../../lib/validation/ai';
+import { reportNarrativeSchema } from '../../lib/validation/report';
 
 export class ClaudeProvider implements AIProvider {
   private client: Anthropic | null = null;
@@ -88,4 +89,73 @@ Output ONLY valid JSON matching this schema:
 
     return askLoopResponseSchema.parse(parsed);
   }
+
+  async generateReportNarrative(input: ReportNarrativeInput): Promise<ReportNarrativeResult> {
+    const anthropic = this.getClient();
+
+    const evidenceString = input.evidence.map(e => `[ID: ${e.id}] [Channel: ${e.channel}] [Sentiment: ${e.sentiment || 'UNKNOWN'}]\n${e.text}`).join('\n\n');
+
+    const systemPrompt = `You are a Voice-of-Customer (VoC) report narrative generator for Project LOOP.
+Your role is to write executive narrative summaries and actionable interpretations based STRICTLY on the deterministic numbers and real customer feedback evidence provided.
+
+RULES:
+1. You must NEVER fabricate numbers, percentages, or statistics. All numerical facts are provided in the input; refer to them accurately.
+2. Every quote in the "quotes" array must use an exact "feedbackId" from the provided evidence, and the "quote" string must be a verbatim excerpt from that specific feedback item.
+3. Keep the tone calm, objective, analytical, and professional.
+4. Output ONLY valid JSON matching this schema:
+{
+  "summary": "High-level executive summary of customer sentiment and key feedback patterns during the period.",
+  "keyThemes": [
+    {
+      "name": "Theme name from the data",
+      "observation": "What customers are saying about this theme, based on evidence"
+    }
+  ],
+  "sentimentTrends": "Analysis of customer sentiment distribution and changes.",
+  "recommendations": [
+    "Concrete actionable recommendation 1",
+    "Concrete actionable recommendation 2"
+  ],
+  "quotes": [
+    {
+      "feedbackId": "ID from provided evidence",
+      "quote": "Verbatim excerpt from this feedback"
+    }
+  ]
+}`;
+
+    const userPrompt = `Reporting Period: ${input.period.from} to ${input.period.to}
+
+Calculated Statistics:
+- Total Feedback: ${input.statistics.totalFeedback}
+- Positive: ${input.statistics.positiveCount} (${input.statistics.positivePercentage.toFixed(1)}%)
+- Negative: ${input.statistics.negativeCount} (${input.statistics.negativePercentage.toFixed(1)}%)
+- Neutral: ${input.statistics.neutralCount}
+- Mixed: ${input.statistics.mixedCount}
+- Channels: ${JSON.stringify(input.statistics.channelCounts)}
+- Top Themes: ${input.statistics.topThemes.map(t => `${t.name} (${t.count})`).join(', ')}
+${input.statistics.sentimentDelta ? `- Period Delta: Positive change ${input.statistics.sentimentDelta.positiveChange.toFixed(1)}%, Negative change ${input.statistics.sentimentDelta.negativeChange.toFixed(1)}%` : ''}
+
+Real Feedback Evidence:
+${evidenceString}
+`;
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-5',
+      max_tokens: 1500,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    const content = response.content[0].type === 'text' ? response.content[0].text : '';
+    let parsed: any;
+    try {
+      parsed = JSON.parse(content);
+    } catch (e) {
+      throw new Error("Failed to parse Claude output as JSON");
+    }
+
+    return reportNarrativeSchema.parse(parsed);
+  }
 }
+

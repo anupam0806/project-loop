@@ -1,7 +1,13 @@
-export default function HomePage() {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-background text-primary">
-      <h1>Welcome to Project LOOP</h1>
-    </main>
-  );
+import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../lib/authOptions';
+
+export default async function HomePage() {
+  const session = await getServerSession(authOptions);
+
+  if (session?.user) {
+    redirect('/dashboard');
+  } else {
+    redirect('/login');
+  }
 }
