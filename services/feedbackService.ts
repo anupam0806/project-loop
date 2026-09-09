@@ -73,17 +73,15 @@ export async function createFeedback(workspaceId: string, payload: any) {
     select: { id: true, text: true, channel: true, status: true, featureArea: true, createdAt: true },
   });
 
-  try {
-    await classifyAndAssignThemes(workspaceId, feedback.id, feedback.text);
-  } catch (err) {
+  // Fire-and-forget classification (non-blocking)
+  classifyAndAssignThemes(workspaceId, feedback.id, feedback.text).catch((err) => {
     console.warn(`Classification failed for feedback ${feedback.id}:`, err);
-  }
+  });
 
-  try {
-    await embedAndPersist(workspaceId, feedback.id, feedback.text);
-  } catch (err) {
+  // Fire-and-forget embedding (non-blocking)
+  embedAndPersist(workspaceId, feedback.id, feedback.text).catch((err) => {
     console.warn(`Embedding failed for feedback ${feedback.id}:`, err);
-  }
+  });
 
   return feedback;
 }
