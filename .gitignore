@@ -40,3 +40,19 @@ node_modules/
 .claude/
 .cursor/
 .devin/
+
+# Official Architecture Documents
+01-PRD.md
+02-Technical-Architecture.md
+03-Database-Schema-and-Data-Model.md
+04-API-Specification-and-Backend-Service-Contracts.md
+05-Calm-UI-UX-and-Frontend-Experience-Specification.md
+06-Final-Implementation-and-Delivery-Specification.md
+
+# Agent Planning & Implementation Docs
+*plan*.md
+*planning*.md
+*consolidation*.md
+*implementation*.md
+phase-*.md
+*-phase-*.md
