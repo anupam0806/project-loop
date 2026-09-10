@@ -1,9 +1,17 @@
+export interface ProviderUsageMetadata {
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+}
+
 export interface ClassificationResult {
   sentiment: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE' | 'MIXED';
   sentimentScore: number;
   urgency: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   category: string;
   themeNames: string[];
+  model?: string;
+  usage?: ProviderUsageMetadata;
 }
 
 export interface Citation {
@@ -15,6 +23,8 @@ export interface AskLoopResponse {
   answer: string;
   citations: Citation[];
   confidence: 'supported' | 'insufficient_evidence';
+  model?: string;
+  usage?: ProviderUsageMetadata;
 }
 
 export interface ReportEvidence {
@@ -52,6 +62,8 @@ export interface ReportNarrativeResult {
   sentimentTrends: string;
   recommendations: string[];
   quotes: Array<{ feedbackId: string; quote: string }>;
+  model?: string;
+  usage?: ProviderUsageMetadata;
 }
 
 export interface AIProvider {
@@ -59,4 +71,5 @@ export interface AIProvider {
   askLoop(prompt: string, context: { question: string; evidence: Array<{ id: string; text: string; channel: string }> }): Promise<AskLoopResponse>;
   generateReportNarrative(input: ReportNarrativeInput): Promise<ReportNarrativeResult>;
 }
+
 

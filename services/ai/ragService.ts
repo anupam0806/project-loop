@@ -1,10 +1,15 @@
 import { prisma } from '../../lib/db';
 import { Prisma } from '@prisma/client';
 import { generateEmbedding } from './embeddingService';
-import { ClaudeProvider } from './claudeProvider';
-import { MockAIProvider } from './mockAIProvider';
+import { getAIProvider } from './providerFactory';
+import { AIProvider } from './aiProvider';
 
-export async function askLoopRAG(workspaceId: string, question: string, requestedLimit?: number) {
+export async function askLoopRAG(
+  workspaceId: string,
+  question: string,
+  requestedLimit?: number,
+  customProvider?: AIProvider
+) {
   const queryEmbedding = await generateEmbedding(question);
   const vectorString = `[${queryEmbedding.join(',')}]`;
   const maxDistance = 0.65;
@@ -36,7 +41,7 @@ export async function askLoopRAG(workspaceId: string, question: string, requeste
     channel: r.channel,
   }));
 
-  const provider = process.env.NODE_ENV === 'test' ? new MockAIProvider() : new ClaudeProvider();
+  const provider = customProvider || getAIProvider();
   
   const aiResponse = await provider.askLoop(question, { question, evidence });
 

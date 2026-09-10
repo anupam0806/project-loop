@@ -1,9 +1,14 @@
 import { prisma } from '../../lib/db';
-import { ClaudeProvider } from './claudeProvider';
-import { MockAIProvider } from './mockAIProvider';
+import { getAIProvider } from './providerFactory';
+import { AIProvider } from './aiProvider';
 
-export async function classifyAndAssignThemes(workspaceId: string, feedbackId: string, text: string) {
-  const provider = process.env.NODE_ENV === 'test' ? new MockAIProvider() : new ClaudeProvider();
+export async function classifyAndAssignThemes(
+  workspaceId: string,
+  feedbackId: string,
+  text: string,
+  customProvider?: AIProvider
+) {
+  const provider = customProvider || getAIProvider();
 
   const classification = await provider.classifyFeedback(text);
 
@@ -16,7 +21,9 @@ export async function classifyAndAssignThemes(workspaceId: string, feedbackId: s
         urgency: classification.urgency,
         category: classification.category,
         classifiedAt: new Date(),
-        classificationModel: process.env.NODE_ENV === 'test' ? 'mock' : 'claude-haiku-4-5-20251001',
+        classificationModel:
+          classification.model ??
+          (process.env.NODE_ENV === 'test' ? 'mock' : 'claude-haiku-4-5-20251001'),
       },
     });
 

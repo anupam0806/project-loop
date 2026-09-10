@@ -1,7 +1,6 @@
 import { prisma } from '../lib/db';
 import { AIProvider, ReportEvidence, ReportNarrativeResult } from './ai/aiProvider';
-import { ClaudeProvider } from './ai/claudeProvider';
-import { MockAIProvider } from './ai/mockAIProvider';
+import { getAIProvider } from './ai/providerFactory';
 import { AppError } from '../utils/AppError';
 import { CreateReportInput } from '../lib/validation/report';
 
@@ -33,13 +32,6 @@ export interface StoredReportDTO {
   narrative: ReportNarrativeResult;
   createdAt: string;
   updatedAt: string;
-}
-
-function getAIProvider(): AIProvider {
-  if (process.env.NODE_ENV === 'test' || !process.env.ANTHROPIC_API_KEY) {
-    return new MockAIProvider();
-  }
-  return new ClaudeProvider();
 }
 
 export async function generateReport(

@@ -49,7 +49,11 @@ ${context?.featureArea ? `\nKnown feature area: ${context.featureArea}` : ""}
       throw new Error("Failed to parse Claude output as JSON");
     }
 
-    return classificationResultSchema.parse(parsed);
+    const validated = classificationResultSchema.parse(parsed);
+    return {
+      ...validated,
+      model: 'claude-haiku-4-5-20251001',
+    };
   }
 
   async askLoop(prompt: string, context: { question: string; evidence: Array<{ id: string; text: string; channel: string }> }): Promise<AskLoopResponse> {
@@ -87,7 +91,11 @@ Output ONLY valid JSON matching this schema:
       throw new Error("Failed to parse Claude output as JSON");
     }
 
-    return askLoopResponseSchema.parse(parsed);
+    const validated = askLoopResponseSchema.parse(parsed);
+    return {
+      ...validated,
+      model: 'claude-sonnet-5',
+    };
   }
 
   async generateReportNarrative(input: ReportNarrativeInput): Promise<ReportNarrativeResult> {
@@ -155,7 +163,11 @@ ${evidenceString}
       throw new Error("Failed to parse Claude output as JSON");
     }
 
-    return reportNarrativeSchema.parse(parsed);
+    const validated = reportNarrativeSchema.parse(parsed);
+    return {
+      ...validated,
+      model: 'claude-sonnet-5',
+    };
   }
 }
 

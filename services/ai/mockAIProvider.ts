@@ -11,6 +11,7 @@ export class MockAIProvider implements AIProvider {
       urgency: text.includes('urgent') ? 'HIGH' : 'LOW',
       category: 'General',
       themeNames: ['Mock Theme'],
+      model: 'mock',
     };
   }
 
@@ -20,6 +21,7 @@ export class MockAIProvider implements AIProvider {
         answer: "I do not have enough feedback evidence in this workspace to answer your question.",
         citations: [],
         confidence: "insufficient_evidence",
+        model: 'mock',
       };
     }
     
@@ -28,7 +30,8 @@ export class MockAIProvider implements AIProvider {
       return {
         answer: "Mock answer",
         citations: [{ feedbackId: "fake-id", snippet: "Mock snippet" }],
-        confidence: "supported"
+        confidence: "supported",
+        model: 'mock',
       }
     }
 
@@ -38,6 +41,7 @@ export class MockAIProvider implements AIProvider {
         { feedbackId: context.evidence[0].id, snippet: context.evidence[0].text.substring(0, 20) }
       ],
       confidence: "supported",
+      model: 'mock',
     };
   }
 
@@ -54,6 +58,7 @@ export class MockAIProvider implements AIProvider {
         sentimentTrends: `Positive was ${input.statistics.positivePercentage.toFixed(1)}%, Negative was ${input.statistics.negativePercentage.toFixed(1)}%.`,
         recommendations: ["Investigate customer pain points"],
         quotes: [{ feedbackId: "fabricated-id-999", quote: "This quote never existed in evidence" }],
+        model: 'mock',
       };
     }
 
@@ -78,6 +83,7 @@ export class MockAIProvider implements AIProvider {
         "Maintain proactive communication with customers experiencing negative friction."
       ],
       quotes,
+      model: 'mock',
     };
   }
 }
