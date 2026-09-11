@@ -62,7 +62,7 @@ export async function getAnalyticsSummary(workspaceId: string) {
   const topThemes = topThemesRaw.map(t => ({
     id: t.id,
     name: t.name,
-    count: t._count.feedbacks
+    count: t._count?.feedbacks ?? 0
   }));
 
   const sentimentOverTime = volumeByDate.map(v => {

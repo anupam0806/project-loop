@@ -8,6 +8,14 @@ const csvRowSchema = z.object({
   featureArea: z.string().optional(),
 });
 
+function sanitizeFormula(str: string): string {
+  // Neutralize formula injection in spreadsheet exports (=, +, -, @)
+  if (/^[=+\-@]/.test(str)) {
+    return `'${str}`;
+  }
+  return str;
+}
+
 export async function importCsv(workspaceId: string, csvText: string) {
   let records: any[];
   try {
@@ -16,6 +24,17 @@ export async function importCsv(workspaceId: string, csvText: string) {
     // Return a summary indicating parse failure instead of throwing
     return { totalRows: 0, imported: 0, failed: 0, errors: [{ row: 0, message: "Failed to parse CSV" }] } as any;
   }
+
+  // Enforce max 1,000 row limit per PRD / File 04 specification
+  if (records.length > 1000) {
+    return {
+      totalRows: records.length,
+      imported: 0,
+      failed: records.length,
+      errors: [{ row: 0, message: "CSV exceeds maximum allowed limit of 1,000 rows" }],
+    };
+  }
+
   const errors: any[] = [];
   const toCreate: any[] = [];
   records.forEach((row, idx) => {
@@ -23,9 +42,15 @@ export async function importCsv(workspaceId: string, csvText: string) {
     if (!result.success) {
       errors.push({ row: idx + 1, message: result.error.message });
     } else {
-      toCreate.push({ ...result.data, workspaceId });
+      toCreate.push({
+        text: sanitizeFormula(result.data.text),
+        channel: result.data.channel,
+        featureArea: result.data.featureArea,
+        workspaceId,
+      });
     }
   });
   const created = await prisma.$transaction(toCreate.map(data => prisma.feedback.create({ data, select: { id: true } })));
   return { totalRows: records.length, imported: created.length, failed: errors.length, errors };
 }
+
