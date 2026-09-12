@@ -170,8 +170,8 @@ function FeedbackInboxContent() {
         {/* Header and Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-primary">Feedback Inbox</h1>
-            <p className="text-xs text-secondary mt-0.5">
+            <h1 className="page-title">Feedback Inbox</h1>
+            <p className="page-description">
               Browse, filter, and manage customer input
             </p>
           </div>

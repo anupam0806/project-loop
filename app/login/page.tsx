@@ -51,8 +51,8 @@ export default function LoginPage() {
           <div className="inline-flex w-8 h-8 rounded-badge bg-accent text-white items-center justify-center font-bold text-sm mx-auto mb-2">
             L
           </div>
-          <h1 className="text-lg font-semibold text-primary">Sign in to Project LOOP</h1>
-          <p className="text-xs text-secondary">Enter your credentials to access your workspace</p>
+          <h1 className="text-xl font-semibold tracking-tight text-primary">Sign in to Project LOOP</h1>
+          <p className="mt-1 text-sm leading-6 text-secondary">Enter your credentials to access your workspace</p>
         </div>
 
         {error && (
