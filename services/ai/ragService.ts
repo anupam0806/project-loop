@@ -1,8 +1,9 @@
 import { prisma } from '../../lib/db';
-import { Prisma } from '@prisma/client';
 import { generateEmbedding } from './embeddingService';
 import { getAIProvider } from './providerFactory';
 import { AIProvider } from './aiProvider';
+import { askLoopResponseSchema } from '../../lib/validation/ai';
+import { boundAIText } from './aiSecurity';
 
 export async function askLoopRAG(
   workspaceId: string,
@@ -10,7 +11,8 @@ export async function askLoopRAG(
   requestedLimit?: number,
   customProvider?: AIProvider
 ) {
-  const queryEmbedding = await generateEmbedding(question);
+  const safeQuestion = boundAIText(question.trim(), 500);
+  const queryEmbedding = await generateEmbedding(safeQuestion);
   const vectorString = `[${queryEmbedding.join(',')}]`;
   const maxDistance = 0.65;
   const limit = Math.min(requestedLimit || 5, 10); // Default top-K 5, Max 10
@@ -31,7 +33,7 @@ export async function askLoopRAG(
     return {
       answer: "I do not have enough feedback evidence in this workspace to answer your question.",
       citations: [],
-      confidence: "insufficient_evidence",
+      confidence: "insufficient_evidence" as const,
     };
   }
 
@@ -43,12 +45,19 @@ export async function askLoopRAG(
 
   const provider = customProvider || getAIProvider();
   
-  const aiResponse = await provider.askLoop(question, { question, evidence });
+  const rawAiResponse = await provider.askLoop(safeQuestion, { question: safeQuestion, evidence });
+  const validatedAiResponse = askLoopResponseSchema.safeParse(rawAiResponse);
+  const aiResponse = validatedAiResponse.success
+    ? validatedAiResponse.data
+    : {
+        answer: rawAiResponse.answer || "Could not generate grounded answer.",
+        citations: Array.isArray(rawAiResponse.citations) ? rawAiResponse.citations : [],
+        confidence: "insufficient_evidence" as const,
+      };
 
-  // Citation Validation
+  // Citation Validation against strictly retrieved workspace IDs
   const validIds = new Set(results.map(r => r.feedbackId));
   const validatedCitations = aiResponse.citations.filter(c => validIds.has(c.feedbackId)).map(c => {
-    // Optionally replace hallucinated snippets with real text from DB
     const realSource = results.find(r => r.feedbackId === c.feedbackId);
     return {
       feedbackId: c.feedbackId,
@@ -56,9 +65,12 @@ export async function askLoopRAG(
     };
   });
 
+  // If citations were claimed but none matched verified evidence IDs, downgrade confidence
+  const finalConfidence = validatedCitations.length === 0 ? "insufficient_evidence" : aiResponse.confidence;
+
   return {
     answer: aiResponse.answer,
     citations: validatedCitations,
-    confidence: aiResponse.confidence,
+    confidence: finalConfidence,
   };
 }

@@ -91,6 +91,10 @@ export default function DashboardPage() {
               <Skeleton variant="chart" />
               <Skeleton variant="chart" />
             </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Skeleton variant="chart" />
+              <Skeleton variant="row" count={4} />
+            </div>
           </div>
         )}
 
@@ -151,109 +155,208 @@ export default function DashboardPage() {
                   Actionable Count
                 </span>
                 <p className="text-2xl font-semibold text-secondary mt-1">
-                  —
+                  {typeof data.actionableFeedback === 'number' && data.actionableFeedback > 0
+                    ? data.actionableFeedback.toLocaleString()
+                    : '—'}
                 </p>
-                <span className="text-[11px] text-secondary mt-0.5 block">Not calculated</span>
+                <span className="text-[11px] text-secondary mt-0.5 block">
+                  {typeof data.actionableFeedback === 'number' && data.actionableFeedback > 0
+                    ? 'Items needing review'
+                    : 'Not calculated'}
+                </span>
               </Card>
             </div>
 
-            {/* Visualizations: Volume over time and Sentiment breakdown */}
+            {/* Visualizations: Row 1 - Chart 1: Volume Timeline & Chart 2: Sentiment Breakdown */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Feedback Volume Over Time */}
+              {/* Chart 1: Feedback Volume Over Time (SVG Timeline) */}
               <Card>
                 <CardHeader
                   title="Feedback Volume Over Time"
                   subtitle="Daily customer feedback counts (last 30 days)"
                 />
-                <div className="h-44 flex flex-col justify-end pt-4">
+                <div className="h-48 flex flex-col justify-between pt-2">
                   {data.volumeOverTime && data.volumeOverTime.length > 0 ? (
-                    <div className="h-36 flex items-end gap-1.5 w-full">
-                      {(() => {
-                        const maxCount = Math.max(...data.volumeOverTime.map((v) => v.count), 1);
-                        return data.volumeOverTime.slice(-20).map((item, idx) => {
-                          const heightPct = Math.max((item.count / maxCount) * 100, 8);
-                          return (
-                            <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group relative">
-                              <div
-                                style={{ height: `${heightPct}%` }}
-                                className="w-full bg-accent/80 hover:bg-accent rounded-t transition-colors"
-                              />
-                              <div className="opacity-0 group-hover:opacity-100 pointer-events-none absolute -top-8 bg-primary text-white text-[10px] px-1.5 py-0.5 rounded shadow z-10 whitespace-nowrap">
-                                {item.date}: {item.count}
-                              </div>
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
+                    (() => {
+                      const timeline = data.volumeOverTime;
+                      const maxVal = Math.max(...timeline.map((v) => v.count), 1);
+                      const width = 460;
+                      const height = 120;
+                      const paddingX = 16;
+                      const paddingY = 16;
+                      const usableW = width - paddingX * 2;
+                      const usableH = height - paddingY * 2;
+
+                      const points = timeline.map((item, idx) => {
+                        const x =
+                          timeline.length > 1
+                            ? paddingX + (idx / (timeline.length - 1)) * usableW
+                            : width / 2;
+                        const y = height - paddingY - (item.count / maxVal) * usableH;
+                        return { x, y, ...item };
+                      });
+
+                      const pathData = points
+                        .map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`)
+                        .join(' ');
+                      const areaData = `${pathData} L ${points[points.length - 1].x.toFixed(1)} ${height - paddingY} L ${points[0].x.toFixed(1)} ${height - paddingY} Z`;
+
+                      return (
+                        <div className="w-full">
+                          <svg
+                            viewBox={`0 0 ${width} ${height}`}
+                            className="w-full h-32 overflow-visible"
+                            preserveAspectRatio="none"
+                            aria-label="Feedback volume timeline chart"
+                          >
+                            <defs>
+                              <linearGradient id="volGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.25" />
+                                <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.0" />
+                              </linearGradient>
+                            </defs>
+                            {/* Horizontal Grid lines */}
+                            <line
+                              x1={paddingX}
+                              y1={paddingY}
+                              x2={width - paddingX}
+                              y2={paddingY}
+                              stroke="#e5e7eb"
+                              strokeDasharray="3 3"
+                            />
+                            <line
+                              x1={paddingX}
+                              y1={height / 2}
+                              x2={width - paddingX}
+                              y2={height / 2}
+                              stroke="#e5e7eb"
+                              strokeDasharray="3 3"
+                            />
+                            <line
+                              x1={paddingX}
+                              y1={height - paddingY}
+                              x2={width - paddingX}
+                              y2={height - paddingY}
+                              stroke="#e5e7eb"
+                            />
+
+                            {/* Filled Area */}
+                            <path d={areaData} fill="url(#volGrad)" />
+
+                            {/* Trend Line */}
+                            <path
+                              d={pathData}
+                              fill="none"
+                              stroke="#4f46e5"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+
+                            {/* Data Points */}
+                            {points.map((pt, idx) => (
+                              <circle
+                                key={idx}
+                                cx={pt.x}
+                                cy={pt.y}
+                                r="3"
+                                fill="#4f46e5"
+                                className="hover:r-5 transition-all cursor-pointer"
+                              >
+                                <title>{`${pt.date}: ${pt.count} feedback items`}</title>
+                              </circle>
+                            ))}
+                          </svg>
+
+                          <div className="flex justify-between text-[10px] text-secondary border-t border-border pt-1.5 mt-1">
+                            <span>{timeline[0]?.date || 'Older'}</span>
+                            <span className="text-secondary font-medium">Peak: {maxVal} items/day</span>
+                            <span>{timeline[timeline.length - 1]?.date || 'Recent'}</span>
+                          </div>
+                        </div>
+                      );
+                    })()
                   ) : (
                     <p className="text-xs text-secondary text-center my-auto">No volume timeline available.</p>
                   )}
-                  <div className="flex justify-between text-[10px] text-secondary border-t border-border pt-1.5 mt-2">
-                    <span>Older</span>
-                    <span>Recent</span>
-                  </div>
                 </div>
               </Card>
 
-              {/* Sentiment Breakdown */}
+              {/* Chart 2: Sentiment Distribution (SVG Segmented Visual) */}
               <Card>
                 <CardHeader
                   title="Sentiment Distribution"
                   subtitle="Overall customer feeling across all items"
                 />
-                <div className="h-44 flex flex-col justify-center space-y-4 pt-2">
-                  {/* Horizontal Stacked Bar */}
-                  <div className="h-6 w-full flex rounded-badge overflow-hidden border border-border">
-                    {data.positivePercentage > 0 && (
-                      <div
-                        style={{ width: `${data.positivePercentage}%` }}
-                        className="bg-positive hover:opacity-90 transition-opacity"
-                        title={`Positive: ${data.positivePercentage.toFixed(1)}%`}
-                      />
-                    )}
-                    {data.neutralPercentage > 0 && (
-                      <div
-                        style={{ width: `${data.neutralPercentage}%` }}
-                        className="bg-neutralSentiment hover:opacity-90 transition-opacity"
-                        title={`Neutral: ${data.neutralPercentage.toFixed(1)}%`}
-                      />
-                    )}
-                    {data.mixedPercentage > 0 && (
-                      <div
-                        style={{ width: `${data.mixedPercentage}%` }}
-                        className="bg-warning hover:opacity-90 transition-opacity"
-                        title={`Mixed: ${data.mixedPercentage.toFixed(1)}%`}
-                      />
-                    )}
-                    {data.negativePercentage > 0 && (
-                      <div
-                        style={{ width: `${data.negativePercentage}%` }}
-                        className="bg-negative hover:opacity-90 transition-opacity"
-                        title={`Negative: ${data.negativePercentage.toFixed(1)}%`}
-                      />
-                    )}
+                <div className="h-48 flex flex-col justify-between pt-2">
+                  {/* SVG Stacked Bar Visual */}
+                  <div className="w-full">
+                    <svg
+                      viewBox="0 0 400 32"
+                      className="w-full h-8 rounded overflow-hidden"
+                      preserveAspectRatio="none"
+                      aria-label="Sentiment distribution chart"
+                    >
+                      {(() => {
+                        const total =
+                          data.positivePercentage +
+                          data.neutralPercentage +
+                          data.mixedPercentage +
+                          data.negativePercentage;
+                        const scale = total > 0 ? 400 / total : 1;
+                        let currentX = 0;
+
+                        const segments = [
+                          { key: 'pos', name: 'Positive', pct: data.positivePercentage, fill: '#16a34a' },
+                          { key: 'neu', name: 'Neutral', pct: data.neutralPercentage, fill: '#9ca3af' },
+                          { key: 'mix', name: 'Mixed', pct: data.mixedPercentage, fill: '#d97706' },
+                          { key: 'neg', name: 'Negative', pct: data.negativePercentage, fill: '#dc2626' },
+                        ];
+
+                        return segments.map((seg) => {
+                          const segWidth = seg.pct * scale;
+                          const rect = (
+                            <rect
+                              key={seg.key}
+                              x={currentX}
+                              y={0}
+                              width={segWidth}
+                              height={32}
+                              fill={seg.fill}
+                            >
+                              <title>{`${seg.name}: ${seg.pct.toFixed(1)}%`}</title>
+                            </rect>
+                          );
+                          currentX += segWidth;
+                          return rect;
+                        });
+                      })()}
+                    </svg>
                   </div>
 
-                  {/* Legend Grid */}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-positive" />
+                  {/* Accessible Legend with Symbols (Never color alone) */}
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-border mt-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-positive inline-block" />
+                      <span className="font-bold text-positive">[+]</span>
                       <span className="text-secondary">Positive:</span>
                       <strong className="text-primary font-semibold">{data.positivePercentage.toFixed(1)}%</strong>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-negative" />
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-negative inline-block" />
+                      <span className="font-bold text-negative">[-]</span>
                       <span className="text-secondary">Negative:</span>
                       <strong className="text-primary font-semibold">{data.negativePercentage.toFixed(1)}%</strong>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-neutralSentiment" />
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-neutralSentiment inline-block" />
+                      <span className="font-bold text-neutralSentiment">[○]</span>
                       <span className="text-secondary">Neutral:</span>
                       <strong className="text-primary font-semibold">{data.neutralPercentage.toFixed(1)}%</strong>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-warning" />
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-warning inline-block" />
+                      <span className="font-bold text-warning">[~]</span>
                       <span className="text-secondary">Mixed:</span>
                       <strong className="text-primary font-semibold">{data.mixedPercentage.toFixed(1)}%</strong>
                     </div>
@@ -262,34 +365,65 @@ export default function DashboardPage() {
               </Card>
             </div>
 
-            {/* Top Themes & Recent Feedback */}
+            {/* Row 2: Chart 3: Top Themes Horizontal Bar Chart & Recent Feedback */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Top Themes */}
+              {/* Chart 3: Top Themes Horizontal Bar Chart */}
               <Card>
                 <CardHeader
                   title="Top Themes"
-                  subtitle="Most recurring feedback topics"
+                  subtitle="Most recurring feedback topics (horizontal distribution)"
                   action={
                     <Link href="/themes" className="text-xs text-accent hover:underline font-medium">
                       View all
                     </Link>
                   }
                 />
-                <div className="divide-y divide-border">
+                <div className="space-y-3 pt-2">
                   {data.topThemes && data.topThemes.length > 0 ? (
-                    data.topThemes.map((theme) => (
-                      <div key={theme.id || theme.name} className="py-2.5 flex items-center justify-between">
-                        <Link
-                          href={`/feedback?theme=${encodeURIComponent(theme.name)}`}
-                          className="text-sm font-medium text-primary hover:text-accent transition-colors"
-                        >
-                          {theme.name}
-                        </Link>
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-badge bg-gray-100 text-secondary border border-border">
-                          {theme.count} items
-                        </span>
-                      </div>
-                    ))
+                    (() => {
+                      const maxThemeCount = Math.max(...data.topThemes.map((t) => t.count), 1);
+                      return data.topThemes.map((theme) => {
+                        const barWidthPercent = Math.max((theme.count / maxThemeCount) * 100, 4);
+                        const pctOfTotal = data.totalFeedback > 0
+                          ? ((theme.count / data.totalFeedback) * 100).toFixed(0)
+                          : '0';
+
+                        return (
+                          <div key={theme.id || theme.name} className="space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <Link
+                                href={`/feedback?theme=${encodeURIComponent(theme.name)}`}
+                                className="font-medium text-primary hover:text-accent transition-colors truncate max-w-[200px]"
+                              >
+                                {theme.name}
+                              </Link>
+                              <div className="flex items-center gap-2">
+                                <span className="text-secondary text-[11px]">{pctOfTotal}% of total</span>
+                                <span className="font-semibold px-2 py-0.5 rounded-badge bg-gray-100 text-secondary border border-border text-[11px]">
+                                  {theme.count} items
+                                </span>
+                              </div>
+                            </div>
+                            {/* Horizontal SVG Bar */}
+                            <svg
+                              viewBox="0 0 100 6"
+                              className="w-full h-2 rounded overflow-hidden bg-gray-100"
+                              preserveAspectRatio="none"
+                              aria-label={`Theme ${theme.name}: ${theme.count} items`}
+                            >
+                              <rect
+                                x="0"
+                                y="0"
+                                width={barWidthPercent}
+                                height="6"
+                                fill="#4f46e5"
+                                rx="3"
+                              />
+                            </svg>
+                          </div>
+                        );
+                      });
+                    })()
                   ) : (
                     <p className="text-xs text-secondary py-4 text-center">No themes detected yet.</p>
                   )}

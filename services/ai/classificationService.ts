@@ -1,6 +1,7 @@
 import { prisma } from '../../lib/db';
 import { getAIProvider } from './providerFactory';
 import { AIProvider } from './aiProvider';
+import { classificationResultSchema } from '../../lib/validation/ai';
 
 export async function classifyAndAssignThemes(
   workspaceId: string,
@@ -10,7 +11,15 @@ export async function classifyAndAssignThemes(
 ) {
   const provider = customProvider || getAIProvider();
 
-  const classification = await provider.classifyFeedback(text);
+  const rawClassification = await provider.classifyFeedback(text);
+  const validated = classificationResultSchema.safeParse(rawClassification);
+  if (!validated.success) {
+    throw new Error('AI provider returned malformed classification schema');
+  }
+  const classification = {
+    ...validated.data,
+    model: rawClassification.model,
+  };
 
   await prisma.$transaction(async (tx) => {
     await tx.feedback.update({
