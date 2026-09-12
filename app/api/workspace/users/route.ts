@@ -3,6 +3,7 @@ import { requireRole } from '../../../../utils/requireRole';
 import { inviteUserSchema } from '../../../../lib/validation/workspace';
 import { listWorkspaceUsers, createWorkspaceUser } from '../../../../services/workspaceService';
 import { AppError } from '../../../../utils/AppError';
+import { parseJsonBody } from '../../../../utils/safeJson';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,8 +30,13 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const user = await requireRole('ADMIN');
-    const body = await req.json();
-    const parsed = inviteUserSchema.safeParse(body);
+
+    const bodyResult = await parseJsonBody(req);
+    if (!bodyResult.success) {
+      return bodyResult.response;
+    }
+
+    const parsed = inviteUserSchema.safeParse(bodyResult.data);
 
     if (!parsed.success) {
       return NextResponse.json(

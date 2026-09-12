@@ -1,5 +1,5 @@
 import { prisma } from "../lib/db";
-import { feedbackCreateSchema } from "../lib/validation/feedback";
+import { feedbackCreateSchema, feedbackUpdateSchema } from "../lib/validation/feedback";
 import { z } from "zod";
 import { classifyAndAssignThemes } from "./ai/classificationService";
 import { embedAndPersist } from "./ai/embeddingService";
@@ -112,13 +112,7 @@ function validateStatusTransition(current: string, next: string): boolean {
 }
 
 export async function updateFeedback(workspaceId: string, id: string, payload: any) {
-  const updateSchema = z.object({
-    text: z.string().min(1).optional(),
-    channel: z.enum(["SUPPORT","APP_REVIEW","SURVEY","SALES","SOCIAL","SIMULATED"]).optional(),
-    featureArea: z.string().optional(),
-    status: z.enum(["NEW","REVIEWED","ACTIONED"]).optional(),
-  });
-  const parsed = updateSchema.safeParse(payload);
+  const parsed = feedbackUpdateSchema.safeParse(payload);
   if (!parsed.success) {
     const err = new Error("VALIDATION_ERROR");
     (err as any).fields = parsed.error.flatten().fieldErrors;

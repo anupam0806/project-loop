@@ -4,12 +4,25 @@ import { askLoopRAG } from '../../../services/ai/ragService';
 import { askLoopRequestSchema } from '../../../lib/validation/ai';
 import { AppError } from '../../../utils/AppError';
 
+import { parseJsonBody } from '../../../utils/safeJson';
+import { checkRateLimit, rateLimitExceededResponse } from '../../../utils/rateLimiter';
+
 export async function POST(req: Request) {
   try {
     const user = await requireRole('ADMIN', 'ANALYST', 'VIEWER');
-    
-    const body = await req.json();
-    const parsed = askLoopRequestSchema.safeParse(body);
+
+    // Rate limit Ask LOOP queries: 30 per minute per workspace
+    const rateCheck = checkRateLimit(`ask-loop:${user.workspaceId}`, { maxRequests: 30, windowMs: 60 * 1000 });
+    if (!rateCheck.allowed) {
+      return rateLimitExceededResponse(rateCheck.resetTime);
+    }
+
+    const bodyResult = await parseJsonBody(req);
+    if (!bodyResult.success) {
+      return bodyResult.response;
+    }
+
+    const parsed = askLoopRequestSchema.safeParse(bodyResult.data);
     
     if (!parsed.success) {
       return NextResponse.json({

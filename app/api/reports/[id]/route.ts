@@ -6,11 +6,13 @@ import { AppError } from '../../../../utils/AppError';
 export const dynamic = 'force-dynamic';
 
 export async function GET(
-
   req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    if (!params.id || typeof params.id !== 'string' || params.id.trim() === '') {
+      return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Valid ID parameter is required.' } }, { status: 400 });
+    }
     const user = await requireRole('ADMIN', 'ANALYST', 'VIEWER');
     const report = await getReportById(user.workspaceId, params.id);
 

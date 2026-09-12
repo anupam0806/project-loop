@@ -4,11 +4,15 @@ import { requireRole } from '../../../../utils/requireRole';
 import { Role } from '@prisma/client';
 import { getTheme, updateTheme } from '../../../../services/themeService';
 import { AppError } from '../../../../utils/AppError';
+import { parseJsonBody } from '../../../../utils/safeJson';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
+    if (!params.id || typeof params.id !== 'string' || params.id.trim() === '') {
+      return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Valid ID parameter is required' } }, { status: 400 });
+    }
     const sessionUser = await requireAuth();
     const workspaceId = (sessionUser as any).workspaceId;
     const theme = await getTheme(workspaceId, params.id);
@@ -32,10 +36,18 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
+    if (!params.id || typeof params.id !== 'string' || params.id.trim() === '') {
+      return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Valid ID parameter is required' } }, { status: 400 });
+    }
     const sessionUser = await requireRole(Role.ADMIN, Role.ANALYST);
     const workspaceId = (sessionUser as any).workspaceId;
-    const json = await request.json();
-    const updated = await updateTheme(workspaceId, params.id, json);
+
+    const bodyResult = await parseJsonBody(request);
+    if (!bodyResult.success) {
+      return bodyResult.response;
+    }
+
+    const updated = await updateTheme(workspaceId, params.id, bodyResult.data);
     if (!updated) {
       return NextResponse.json({ error: { code: 'NOT_FOUND', message: 'Theme not found' } }, { status: 404 });
     }

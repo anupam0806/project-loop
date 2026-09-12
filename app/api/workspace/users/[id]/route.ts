@@ -4,14 +4,24 @@ import { updateUserSchema } from '../../../../../lib/validation/workspace';
 import { updateWorkspaceUser, deleteWorkspaceUser } from '../../../../../services/workspaceService';
 import { AppError } from '../../../../../utils/AppError';
 
+import { parseJsonBody } from '../../../../../utils/safeJson';
+
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    if (!params.id || typeof params.id !== 'string' || params.id.trim() === '') {
+      return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Valid user ID is required.' } }, { status: 400 });
+    }
     const user = await requireRole('ADMIN');
-    const body = await req.json();
-    const parsed = updateUserSchema.safeParse(body);
+
+    const bodyResult = await parseJsonBody(req);
+    if (!bodyResult.success) {
+      return bodyResult.response;
+    }
+
+    const parsed = updateUserSchema.safeParse(bodyResult.data);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -47,6 +57,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    if (!params.id || typeof params.id !== 'string' || params.id.trim() === '') {
+      return NextResponse.json({ error: { code: 'VALIDATION_ERROR', message: 'Valid user ID is required.' } }, { status: 400 });
+    }
     const user = await requireRole('ADMIN');
     const result = await deleteWorkspaceUser(user.workspaceId, params.id, user.id);
     return NextResponse.json({ data: result });

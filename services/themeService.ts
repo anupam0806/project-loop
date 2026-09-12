@@ -2,8 +2,8 @@ import { prisma } from "../lib/db";
 import { z } from "zod";
 
 const themeCreateSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
+  name: z.string().trim().min(1, "Theme name is required").max(100, "Theme name must not exceed 100 characters"),
+  description: z.string().trim().max(1000, "Description must not exceed 1,000 characters").optional(),
 });
 
 export async function listThemes(workspaceId: string) {
@@ -53,8 +53,8 @@ export async function createTheme(workspaceId: string, payload: any) {
 
 export async function updateTheme(workspaceId: string, id: string, payload: any) {
   const updateSchema = z.object({
-    name: z.string().min(1).optional(),
-    description: z.string().optional(),
+    name: z.string().trim().min(1, "Theme name cannot be empty").max(100, "Theme name must not exceed 100 characters").optional(),
+    description: z.string().trim().max(1000, "Description must not exceed 1,000 characters").optional(),
   });
   const parsed = updateSchema.safeParse(payload);
   if (!parsed.success) {

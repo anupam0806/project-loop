@@ -5,6 +5,8 @@ import { Role } from '@prisma/client';
 import { createReportSchema } from '../../../lib/validation/report';
 import { generateReport, listReports } from '../../../services/reportService';
 import { AppError } from '../../../utils/AppError';
+import { parseJsonBody } from '../../../utils/safeJson';
+import { checkRateLimit, rateLimitExceededResponse } from '../../../utils/rateLimiter';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,9 +34,19 @@ export async function POST(req: Request) {
   try {
     // Only ADMIN and ANALYST can generate reports. VIEWER is rejected with 403.
     const user = await requireRole('ADMIN', 'ANALYST');
-    
-    const body = await req.json();
-    const parsed = createReportSchema.safeParse(body);
+
+    // Rate limit report generations: 15 per minute per workspace
+    const rateCheck = checkRateLimit(`report-generate:${user.workspaceId}`, { maxRequests: 15, windowMs: 60 * 1000 });
+    if (!rateCheck.allowed) {
+      return rateLimitExceededResponse(rateCheck.resetTime);
+    }
+
+    const bodyResult = await parseJsonBody(req);
+    if (!bodyResult.success) {
+      return bodyResult.response;
+    }
+
+    const parsed = createReportSchema.safeParse(bodyResult.data);
     if (!parsed.success) {
       return NextResponse.json(
         {
@@ -52,8 +64,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: report }, { status: 201 });
   } catch (error: any) {
     if (error instanceof AppError) {
+      const code = error.statusCode === 400 ? 'VALIDATION_ERROR' : error.statusCode === 401 ? 'UNAUTHORIZED' : error.statusCode === 403 ? 'FORBIDDEN' : 'REPORT_GENERATION_FAILED';
       return NextResponse.json(
-        { error: { code: 'REPORT_GENERATION_FAILED', message: error.message } },
+        { error: { code, message: error.message } },
         { status: error.statusCode }
       );
     }

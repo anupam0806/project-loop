@@ -3,10 +3,24 @@ import { signupSchema } from '../../../../lib/validation/auth';
 import { signup } from '../../../../services/workspaceService';
 import { AppError } from '../../../../utils/AppError';
 
+import { parseJsonBody } from '../../../../utils/safeJson';
+import { checkRateLimit, rateLimitExceededResponse, getClientIp } from '../../../../utils/rateLimiter';
+
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const parsed = signupSchema.safeParse(body);
+    // Rate limit registration: 10 signups per 15 minutes per IP
+    const clientIp = getClientIp(req);
+    const rateCheck = checkRateLimit(`signup:${clientIp}`, { maxRequests: 10, windowMs: 15 * 60 * 1000 });
+    if (!rateCheck.allowed) {
+      return rateLimitExceededResponse(rateCheck.resetTime);
+    }
+
+    const bodyResult = await parseJsonBody(req);
+    if (!bodyResult.success) {
+      return bodyResult.response;
+    }
+
+    const parsed = signupSchema.safeParse(bodyResult.data);
 
     if (!parsed.success) {
       return NextResponse.json(

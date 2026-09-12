@@ -2,8 +2,8 @@ import { prisma } from "../lib/db";
 import { z } from "zod";
 
 const simulateSchema = z.object({
-  text: z.string().min(1),
-  featureArea: z.string().optional(),
+  text: z.string().trim().min(1, "Text is required").max(5000, "Text must not exceed 5,000 characters"),
+  featureArea: z.string().trim().max(100, "Feature area must not exceed 100 characters").optional(),
 });
 
 export async function simulateIngestion(workspaceId: string, payload: any) {

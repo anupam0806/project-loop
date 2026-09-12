@@ -5,6 +5,8 @@ import { requireRole } from '../../../utils/requireRole';
 import { AppError } from '../../../utils/AppError';
 import { Role } from '@prisma/client';
 import { listFeedback, createFeedback } from '../../../services/feedbackService';
+import { parseJsonBody } from '../../../utils/safeJson';
+import { checkRateLimit, rateLimitExceededResponse } from '../../../utils/rateLimiter';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,8 +42,19 @@ export async function POST(request: Request) {
   try {
     const sessionUser = await requireRole(Role.ADMIN, Role.ANALYST);
     const workspaceId = (sessionUser as any).workspaceId;
-    const json = await request.json();
-    const feedback = await createFeedback(workspaceId, json);
+
+    // Rate limit feedback creation: 60 per minute per workspace
+    const rateCheck = checkRateLimit(`feedback-create:${workspaceId}`, { maxRequests: 60, windowMs: 60 * 1000 });
+    if (!rateCheck.allowed) {
+      return rateLimitExceededResponse(rateCheck.resetTime);
+    }
+
+    const bodyResult = await parseJsonBody(request);
+    if (!bodyResult.success) {
+      return bodyResult.response;
+    }
+
+    const feedback = await createFeedback(workspaceId, bodyResult.data);
     return NextResponse.json({ data: feedback }, { status: 201 });
   } catch (error: any) {
     if (error instanceof AppError) {

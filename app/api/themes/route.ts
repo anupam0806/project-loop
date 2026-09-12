@@ -4,6 +4,7 @@ import { requireRole } from '../../../utils/requireRole';
 import { Role } from '@prisma/client';
 import { listThemes, createTheme } from '../../../services/themeService';
 import { AppError } from '../../../utils/AppError';
+import { parseJsonBody } from '../../../utils/safeJson';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,8 +32,13 @@ export async function POST(request: Request) {
   try {
     const sessionUser = await requireRole(Role.ADMIN, Role.ANALYST);
     const workspaceId = (sessionUser as any).workspaceId;
-    const json = await request.json();
-    const theme = await createTheme(workspaceId, json);
+
+    const bodyResult = await parseJsonBody(request);
+    if (!bodyResult.success) {
+      return bodyResult.response;
+    }
+
+    const theme = await createTheme(workspaceId, bodyResult.data);
     return NextResponse.json({ data: theme }, { status: 201 });
   } catch (error: any) {
     if (error instanceof AppError) {

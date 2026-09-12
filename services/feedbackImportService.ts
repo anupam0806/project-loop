@@ -3,9 +3,9 @@ import { z } from "zod";
 import { parse } from "csv-parse/sync";
 
 const csvRowSchema = z.object({
-  text: z.string().min(1),
+  text: z.string().trim().min(1, "Text is required").max(5000, "Text must not exceed 5,000 characters"),
   channel: z.enum(["SUPPORT","APP_REVIEW","SURVEY","SALES","SOCIAL","SIMULATED"]),
-  featureArea: z.string().optional(),
+  featureArea: z.string().trim().max(100, "Feature area must not exceed 100 characters").optional(),
 });
 
 function sanitizeFormula(str: string): string {
@@ -45,7 +45,7 @@ export async function importCsv(workspaceId: string, csvText: string) {
       toCreate.push({
         text: sanitizeFormula(result.data.text),
         channel: result.data.channel,
-        featureArea: result.data.featureArea,
+        featureArea: result.data.featureArea ? sanitizeFormula(result.data.featureArea) : undefined,
         workspaceId,
       });
     }
