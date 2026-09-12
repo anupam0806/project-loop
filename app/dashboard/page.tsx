@@ -78,8 +78,8 @@ export default function DashboardPage() {
     <AppShell>
       <div className="space-y-6">
         <div>
-          <h1 className="text-xl font-semibold text-primary">Dashboard</h1>
-          <p className="text-xs text-secondary mt-0.5">Overview of customer feedback and sentiment trends</p>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-description">Overview of customer feedback and sentiment trends</p>
         </div>
 
         {loading && (

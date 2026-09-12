@@ -67,8 +67,8 @@ export default function AskLoopPage() {
       <div className="max-w-3xl mx-auto space-y-6 pt-4">
         {/* Title and Intro */}
         <div className="text-center space-y-1">
-          <h1 className="text-xl font-semibold text-primary">Ask LOOP</h1>
-          <p className="text-xs text-secondary">
+          <h1 className="page-title">Ask LOOP</h1>
+          <p className="page-description">
             Synthesize answers grounded strictly in verified customer feedback evidence
           </p>
         </div>

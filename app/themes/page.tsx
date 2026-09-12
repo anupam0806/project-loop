@@ -51,8 +51,8 @@ export default function ThemesPage() {
     <AppShell>
       <div className="space-y-4">
         <div>
-          <h1 className="text-xl font-semibold text-primary">Customer Feedback Themes</h1>
-          <p className="text-xs text-secondary mt-0.5">
+          <h1 className="page-title">Customer Feedback Themes</h1>
+          <p className="page-description">
             Key topics extracted across customer feedback with sentiment breakdowns
           </p>
         </div>

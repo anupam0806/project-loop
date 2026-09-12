@@ -104,8 +104,8 @@ export default function ReportsListPage() {
         {/* Header and Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-primary">Voice of Customer Reports</h1>
-            <p className="text-xs text-secondary mt-0.5">
+            <h1 className="page-title">Voice of Customer Reports</h1>
+            <p className="page-description">
               Factual statistical summaries synthesized with AI narrative interpretation
             </p>
           </div>

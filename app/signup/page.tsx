@@ -72,8 +72,8 @@ export default function SignupPage() {
           <div className="inline-flex w-8 h-8 rounded-badge bg-accent text-white items-center justify-center font-bold text-sm mx-auto mb-2">
             L
           </div>
-          <h1 className="text-lg font-semibold text-primary">Create your Project LOOP Workspace</h1>
-          <p className="text-xs text-secondary">You will be designated as the workspace Administrator</p>
+          <h1 className="text-xl font-semibold tracking-tight text-primary">Create your Project LOOP Workspace</h1>
+          <p className="mt-1 text-sm leading-6 text-secondary">You will be designated as the workspace Administrator</p>
         </div>
 
         {error && (
