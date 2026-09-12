@@ -57,6 +57,8 @@ node_modules/
 phase-*.md
 *-phase-*.md
 
-# Test coverage
+# Test coverage and artifacts
 coverage/
+test-results/
+playwright-report/
 

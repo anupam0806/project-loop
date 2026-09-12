@@ -59,7 +59,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "project-loop-fallback-secret-2026-auth-session-key",
   pages: {
     signIn: "/login",
   },
