@@ -26,20 +26,20 @@ export async function getAnalyticsSummary(workspaceId: string) {
   const actionableFeedback = 0; 
 
   const volumeByDate = await prisma.$queryRaw<Array<{ date: string; count: bigint }>>`
-    SELECT DATE(createdAt) as date, COUNT(*) as count
+    SELECT DATE("createdAt") as date, COUNT(*) as count
     FROM "Feedback"
     WHERE "workspaceId" = ${workspaceId}
-    GROUP BY DATE(createdAt)
+    GROUP BY DATE("createdAt")
     ORDER BY date ASC
     LIMIT 30;
   `;
 
   // Sentiment over time
   const sentimentByDate = await prisma.$queryRaw<Array<{ date: string; sentiment: string; count: bigint }>>`
-    SELECT DATE(createdAt) as date, sentiment, COUNT(*) as count
+    SELECT DATE("createdAt") as date, sentiment, COUNT(*) as count
     FROM "Feedback"
     WHERE "workspaceId" = ${workspaceId} AND sentiment IS NOT NULL
-    GROUP BY DATE(createdAt), sentiment
+    GROUP BY DATE("createdAt"), sentiment
     ORDER BY date ASC
     LIMIT 120;
   `;
