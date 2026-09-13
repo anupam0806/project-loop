@@ -53,8 +53,8 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({
       error: {
-        code: "INTERNAL_ERROR",
-        message: "An internal server error occurred."
+        code: "AI_PROCESSING_FAILED",
+        message: error?.message ? String(error.message).replace(/AIza[0-9A-Za-z-_]{35}/g, '[REDACTED]') : "AI processing encountered an error."
       }
     }, { status: 500 });
   }

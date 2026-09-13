@@ -4,7 +4,10 @@ let pipelinePromise: Promise<any> | null = null;
 
 async function getEmbeddingPipeline() {
   if (!pipelinePromise) {
-    const { pipeline } = await import('@xenova/transformers');
+    const { pipeline, env } = await import('@xenova/transformers');
+    if (env && typeof process !== 'undefined' && process.env) {
+      env.cacheDir = '/tmp/.transformers_cache';
+    }
     pipelinePromise = pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
   }
   return pipelinePromise;

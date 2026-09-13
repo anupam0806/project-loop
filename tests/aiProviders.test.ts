@@ -65,8 +65,8 @@ describe('AI Provider Selection & Factory', () => {
     const vocInfo = getAIModelInfo('voc', 'free');
 
     expect(classificationInfo).toEqual({ provider: 'groq', model: 'openai/gpt-oss-20b' });
-    expect(askInfo).toEqual({ provider: 'gemini', model: 'gemini-2.5-flash' });
-    expect(vocInfo).toEqual({ provider: 'gemini', model: 'gemini-2.5-flash' });
+    expect(askInfo).toEqual({ provider: 'gemini', model: 'gemini-1.5-flash' });
+    expect(vocInfo).toEqual({ provider: 'gemini', model: 'gemini-1.5-flash' });
   });
 
   it('reports correct model metadata for claude configuration', () => {
@@ -202,7 +202,7 @@ describe('GeminiProvider Adapter Normalization', () => {
     expect(result.confidence).toBe('supported');
     expect(result.citations).toHaveLength(1);
     expect(result.citations[0].feedbackId).toBe('fb-101');
-    expect(result.model).toBe('gemini-2.5-flash');
+    expect(result.model).toBe('gemini-1.5-flash');
     expect(result.usage).toEqual({
       promptTokens: 150,
       completionTokens: 45,
@@ -281,7 +281,7 @@ describe('GeminiProvider Adapter Normalization', () => {
     expect(result.summary).toBe('Strong customer satisfaction in August.');
     expect(result.recommendations).toHaveLength(1);
     expect(result.quotes[0].feedbackId).toBe('fb-201');
-    expect(result.model).toBe('gemini-2.5-flash');
+    expect(result.model).toBe('gemini-1.5-flash');
     expect(result.usage?.totalTokens).toBe(420);
   });
 

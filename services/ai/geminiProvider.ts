@@ -23,7 +23,7 @@ export class GeminiProvider implements AIProvider {
 
   constructor(options?: GeminiProviderOptions) {
     this.apiKey = options?.apiKey;
-    this.model = options?.model || 'gemini-2.5-flash';
+    this.model = options?.model || process.env.GEMINI_MODEL || 'gemini-1.5-flash';
     this.fetchFn = options?.fetchFn || globalThis.fetch;
   }
 
@@ -58,67 +58,83 @@ export class GeminiProvider implements AIProvider {
     temperature = 0.1
   ): Promise<{ contentText: string; usage?: ProviderUsageMetadata }> {
     const apiKey = this.getApiKey();
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
+    const candidateModels = [this.model, 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'].filter(
+      (m, idx, arr) => arr.indexOf(m) === idx
+    );
 
-    const requestBody = {
-      systemInstruction: {
-        parts: [{ text: systemInstruction }],
-      },
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: userPrompt }],
+    let lastError: Error | null = null;
+
+    for (const modelToTry of candidateModels) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelToTry}:generateContent`;
+      const requestBody = {
+        systemInstruction: {
+          parts: [{ text: systemInstruction }],
         },
-      ],
-      generationConfig: {
-        temperature,
-        responseMimeType: 'application/json',
-      },
-    };
-
-    let response: Response;
-    try {
-      response = await this.fetchFn(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: userPrompt }],
+          },
+        ],
+        generationConfig: {
+          temperature,
+          responseMimeType: 'application/json',
         },
-        body: JSON.stringify(requestBody),
-      });
-    } catch (networkErr: any) {
-      throw new Error(
-        `Gemini network error: ${this.sanitizeError(networkErr?.message || 'Failed to connect')}`
-      );
-    }
-
-    if (!response.ok) {
-      let errorDetails = response.statusText;
-      try {
-        const errJson = await response.json();
-        errorDetails = errJson?.error?.message || JSON.stringify(errJson);
-      } catch {
-        // use status text
-      }
-      throw new Error(
-        `Gemini API error (${response.status}): ${this.sanitizeError(errorDetails)}`
-      );
-    }
-
-    const data = await response.json();
-    const candidate = data?.candidates?.[0];
-    const text = candidate?.content?.parts?.[0]?.text || '';
-
-    let usage: ProviderUsageMetadata | undefined;
-    if (data?.usageMetadata) {
-      usage = {
-        promptTokens: data.usageMetadata.promptTokenCount,
-        completionTokens: data.usageMetadata.candidatesTokenCount,
-        totalTokens: data.usageMetadata.totalTokenCount,
       };
+
+      let response: Response;
+      try {
+        response = await this.fetchFn(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
+          body: JSON.stringify(requestBody),
+        });
+      } catch (networkErr: any) {
+        lastError = new Error(
+          `Gemini network error: ${this.sanitizeError(networkErr?.message || 'Failed to connect')}`
+        );
+        continue;
+      }
+
+      if (!response.ok) {
+        let errorDetails = response.statusText;
+        try {
+          const errJson = await response.json();
+          errorDetails = errJson?.error?.message || JSON.stringify(errJson);
+        } catch {
+          // use status text
+        }
+        lastError = new Error(
+          `Gemini API error (${response.status}): ${this.sanitizeError(errorDetails)}`
+        );
+        if (response.status === 404 && candidateModels.indexOf(modelToTry) < candidateModels.length - 1) {
+          // Try next fallback model
+          continue;
+        }
+        throw lastError;
+      }
+
+      this.model = modelToTry;
+      const data = await response.json();
+      const candidate = data?.candidates?.[0];
+      const text = candidate?.content?.parts?.[0]?.text || '';
+
+      let usage: ProviderUsageMetadata | undefined;
+      if (data?.usageMetadata) {
+        usage = {
+          promptTokens: data.usageMetadata.promptTokenCount,
+          completionTokens: data.usageMetadata.candidatesTokenCount,
+          totalTokens: data.usageMetadata.totalTokenCount,
+        };
+      }
+
+      return { contentText: text, usage };
     }
 
-    return { contentText: text, usage };
+    throw lastError || new Error('Gemini API call failed across all candidate models.');
   }
 
   async classifyFeedback(

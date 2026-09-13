@@ -102,7 +102,7 @@ export function getAIModelInfo(role: AIRole, override?: string): { provider: str
     if (role === 'classification') {
       return { provider: 'groq', model: 'openai/gpt-oss-20b' };
     }
-    return { provider: 'gemini', model: 'gemini-2.5-flash' };
+    return { provider: 'gemini', model: process.env.GEMINI_MODEL || 'gemini-1.5-flash' };
   }
 
   if (type === 'groq') {
@@ -110,7 +110,7 @@ export function getAIModelInfo(role: AIRole, override?: string): { provider: str
   }
 
   if (type === 'gemini') {
-    return { provider: 'gemini', model: 'gemini-2.5-flash' };
+    return { provider: 'gemini', model: process.env.GEMINI_MODEL || 'gemini-1.5-flash' };
   }
 
   return { provider: 'unknown', model: 'unknown' };
