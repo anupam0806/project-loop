@@ -233,9 +233,9 @@ test.describe('5.6 Playwright E2E — Critical User Journeys', () => {
 
       await expect(page.locator('text=Workspace Profile')).toBeVisible();
       await expect(page.getByRole('heading', { name: 'Team Members' })).toBeVisible();
-      await expect(page.locator('text=admin@example.com')).toBeVisible();
-      await expect(page.locator('text=analyst@example.com')).toBeVisible();
-      await expect(page.locator('text=viewer@example.com')).toBeVisible();
+      await expect(page.getByRole('cell', { name: 'admin@example.com' })).toBeVisible();
+      await expect(page.getByRole('cell', { name: 'analyst@example.com' })).toBeVisible();
+      await expect(page.getByRole('cell', { name: 'viewer@example.com' })).toBeVisible();
     });
   });
 
