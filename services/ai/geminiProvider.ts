@@ -282,11 +282,24 @@ ${evidenceString}
 
     const { contentText, usage } = await this.callGeminiApi(systemPrompt, userPrompt, 0.2);
 
-    let parsed: unknown;
+    let parsed: any;
     try {
       parsed = JSON.parse(this.cleanJsonText(contentText));
     } catch {
       throw new Error('Failed to parse Gemini output as JSON');
+    }
+
+    if (parsed && typeof parsed === 'object') {
+      if (parsed.narrative && typeof parsed.narrative === 'object') {
+        parsed = parsed.narrative;
+      } else if (parsed.report && typeof parsed.report === 'object') {
+        parsed = parsed.report;
+      }
+      parsed.summary = parsed.summary || parsed.executiveSummary || parsed.executive_summary;
+      parsed.sentimentTrends = parsed.sentimentTrends || parsed.sentiment_trends || parsed.sentimentTrend || parsed.sentiment;
+      parsed.keyThemes = Array.isArray(parsed.keyThemes) ? parsed.keyThemes : (Array.isArray(parsed.key_themes) ? parsed.key_themes : undefined);
+      parsed.recommendations = Array.isArray(parsed.recommendations) ? parsed.recommendations : (Array.isArray(parsed.actionItems) ? parsed.actionItems : (Array.isArray(parsed.actions) ? parsed.actions : undefined));
+      parsed.quotes = Array.isArray(parsed.quotes) ? parsed.quotes : (Array.isArray(parsed.keyQuotes) ? parsed.keyQuotes : (Array.isArray(parsed.evidence) ? parsed.evidence : undefined));
     }
 
     const validated = reportNarrativeSchema.parse(parsed);
