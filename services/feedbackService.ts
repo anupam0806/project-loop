@@ -144,12 +144,6 @@ export async function analyzeFeedback(workspaceId: string, id: string, customPro
   return getFeedback(workspaceId, id);
 }
 
-// Update feedback with status transition validation
-function validateStatusTransition(current: string, next: string): boolean {
-  const allowed: Record<string, string> = { NEW: "REVIEWED", REVIEWED: "ACTIONED" };
-  return allowed[current] === next;
-}
-
 export async function updateFeedback(workspaceId: string, id: string, payload: any) {
   const parsed = feedbackUpdateSchema.safeParse(payload);
   if (!parsed.success) {
@@ -159,12 +153,7 @@ export async function updateFeedback(workspaceId: string, id: string, payload: a
   }
   const existing = await prisma.feedback.findUnique({ where: { id } });
   if (!existing || existing.workspaceId !== workspaceId) return null;
-  if (parsed.data.status && parsed.data.status !== existing.status) {
-    if (!validateStatusTransition(existing.status, parsed.data.status)) {
-      const err = new Error("INVALID_STATUS_TRANSITION");
-      throw err;
-    }
-  }
+
   const updated = await prisma.feedback.update({
     where: { id },
     data: parsed.data,

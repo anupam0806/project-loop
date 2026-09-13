@@ -80,7 +80,9 @@ export default function FeedbackDetailPage() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to update status.');
+        const errorData = await res.json().catch(() => null);
+        const msg = errorData?.error?.message || 'Failed to update status.';
+        throw new Error(msg);
       }
 
       const json = await res.json();

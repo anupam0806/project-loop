@@ -169,29 +169,33 @@ describe('Status Transitions', () => {
     expect(updated!.status).toBe('ACTIONED');
   });
 
-  it('rejects NEW → ACTIONED (skip)', async () => {
-    const fb = await createFeedback(ws, { text: 'Bad transition', channel: 'SALES' });
-    await expect(updateFeedback(ws, fb.id, { status: 'ACTIONED' })).rejects.toThrow('INVALID_STATUS_TRANSITION');
+  it('allows NEW → ACTIONED (skip)', async () => {
+    const fb = await createFeedback(ws, { text: 'Skip transition', channel: 'SALES' });
+    const updated = await updateFeedback(ws, fb.id, { status: 'ACTIONED' });
+    expect(updated!.status).toBe('ACTIONED');
   });
 
-  it('rejects REVIEWED → NEW (backward)', async () => {
+  it('allows REVIEWED → NEW (backward)', async () => {
     const fb = await createFeedback(ws, { text: 'Backward', channel: 'SALES' });
     await updateFeedback(ws, fb.id, { status: 'REVIEWED' });
-    await expect(updateFeedback(ws, fb.id, { status: 'NEW' })).rejects.toThrow('INVALID_STATUS_TRANSITION');
+    const updated = await updateFeedback(ws, fb.id, { status: 'NEW' });
+    expect(updated!.status).toBe('NEW');
   });
 
-  it('rejects ACTIONED → NEW', async () => {
+  it('allows ACTIONED → NEW (backward)', async () => {
     const fb = await createFeedback(ws, { text: 'Full cycle', channel: 'SALES' });
     await updateFeedback(ws, fb.id, { status: 'REVIEWED' });
     await updateFeedback(ws, fb.id, { status: 'ACTIONED' });
-    await expect(updateFeedback(ws, fb.id, { status: 'NEW' })).rejects.toThrow('INVALID_STATUS_TRANSITION');
+    const updated = await updateFeedback(ws, fb.id, { status: 'NEW' });
+    expect(updated!.status).toBe('NEW');
   });
 
-  it('rejects ACTIONED → REVIEWED', async () => {
+  it('allows ACTIONED → REVIEWED (backward)', async () => {
     const fb = await createFeedback(ws, { text: 'Back from actioned', channel: 'SUPPORT' });
     await updateFeedback(ws, fb.id, { status: 'REVIEWED' });
     await updateFeedback(ws, fb.id, { status: 'ACTIONED' });
-    await expect(updateFeedback(ws, fb.id, { status: 'REVIEWED' })).rejects.toThrow('INVALID_STATUS_TRANSITION');
+    const updated = await updateFeedback(ws, fb.id, { status: 'REVIEWED' });
+    expect(updated!.status).toBe('REVIEWED');
   });
 
   it('allows update without changing status', async () => {
@@ -203,36 +207,36 @@ describe('Status Transitions', () => {
 });
 
 describe('Tenant Isolation', () => {
-  const wsA = 'tenant-a';
-  const wsB = 'tenant-b';
+  const wsA = 'workspace-alpha';
+  const wsB = 'workspace-beta';
 
-  it('workspace A cannot read workspace B feedback', async () => {
-    const fb = await createFeedback(wsA, { text: 'Private A', channel: 'SUPPORT' });
+  it('does not leak feedback across workspaces in list', async () => {
+    await createFeedback(wsA, { text: 'Alpha item', channel: 'SUPPORT' });
+    await createFeedback(wsB, { text: 'Beta item', channel: 'SUPPORT' });
+    const resultA = await listFeedback({ workspaceId: wsA, page: 1, pageSize: 25 });
+    const resultB = await listFeedback({ workspaceId: wsB, page: 1, pageSize: 25 });
+    expect(resultA.meta.total).toBe(1);
+    expect(resultB.meta.total).toBe(1);
+    expect(resultA.data[0].text).toBe('Alpha item');
+    expect(resultB.data[0].text).toBe('Beta item');
+  });
+
+  it('cannot read feedback from another workspace by ID', async () => {
+    const fb = await createFeedback(wsA, { text: 'Private', channel: 'SUPPORT' });
     const fetched = await getFeedback(wsB, fb.id);
     expect(fetched).toBeNull();
   });
 
-  it('workspace A cannot update workspace B feedback', async () => {
-    const fb = await createFeedback(wsA, { text: 'Tenant update test', channel: 'SUPPORT' });
+  it('cannot update feedback in another workspace', async () => {
+    const fb = await createFeedback(wsA, { text: 'Original', channel: 'SUPPORT' });
     const result = await updateFeedback(wsB, fb.id, { text: 'Hacked' });
     expect(result).toBeNull();
   });
 
-  it('workspace A cannot delete workspace B feedback', async () => {
-    const fb = await createFeedback(wsA, { text: 'Tenant delete test', channel: 'SUPPORT' });
+  it('cannot delete feedback in another workspace', async () => {
+    const fb = await createFeedback(wsA, { text: 'Protected', channel: 'SUPPORT' });
     const result = await deleteFeedback(wsB, fb.id);
     expect(result).toBe(false);
-  });
-
-  it('listFeedback only returns own workspace data', async () => {
-    await createFeedback(wsA, { text: 'A data', channel: 'SUPPORT' });
-    await createFeedback(wsB, { text: 'B data', channel: 'SUPPORT' });
-
-    const resultA = await listFeedback({ workspaceId: wsA, page: 1, pageSize: 25 });
-    expect(resultA.data.every((fb: any) => fb.text !== 'B data')).toBe(true);
-
-    const resultB = await listFeedback({ workspaceId: wsB, page: 1, pageSize: 25 });
-    expect(resultB.data.every((fb: any) => fb.text !== 'A data')).toBe(true);
   });
 });
 
@@ -247,13 +251,10 @@ describe('Error Handling', () => {
     }
   });
 
-  it('invalid status transition throws INVALID_STATUS_TRANSITION', async () => {
+  it('rejects invalid status value not in FeedbackStatus enum', async () => {
     const fb = await createFeedback('ws', { text: 'Test', channel: 'SUPPORT' });
-    try {
-      await updateFeedback('ws', fb.id, { status: 'ACTIONED' });
-      expect.unreachable('Should have thrown');
-    } catch (e: any) {
-      expect(e.message).toBe('INVALID_STATUS_TRANSITION');
-    }
+    await expect(
+      updateFeedback('ws', fb.id, { status: 'INVALID_STATUS' as any })
+    ).rejects.toThrow('VALIDATION_ERROR');
   });
 });

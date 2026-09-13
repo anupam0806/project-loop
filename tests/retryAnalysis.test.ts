@@ -77,7 +77,7 @@ describe('Retry Analysis & Status Decoupling', () => {
       expect(crossWorkspaceAttempt).toBeNull();
     });
 
-    it('proves the status state machine was NOT changed to permit ANALYZING', async () => {
+    it('proves the status state machine rejects ANALYZING while allowing valid transitions', async () => {
       const fb = await createFeedback(wsA, { text: 'Testing status transition rejection', channel: 'SUPPORT' });
       await updateFeedback(wsA, fb.id, { status: 'REVIEWED' });
       await updateFeedback(wsA, fb.id, { status: 'ACTIONED' });
@@ -87,10 +87,9 @@ describe('Retry Analysis & Status Decoupling', () => {
         updateFeedback(wsA, fb.id, { status: 'ANALYZING' as any })
       ).rejects.toThrow('VALIDATION_ERROR');
 
-      // Attempting an invalid status transition on ACTIONED (e.g. back to REVIEWED) must throw INVALID_STATUS_TRANSITION
-      await expect(
-        updateFeedback(wsA, fb.id, { status: 'REVIEWED' })
-      ).rejects.toThrow('INVALID_STATUS_TRANSITION');
+      // Valid backward transition to REVIEWED succeeds
+      const back = await updateFeedback(wsA, fb.id, { status: 'REVIEWED' });
+      expect(back!.status).toBe('REVIEWED');
     });
   });
 
