@@ -38,8 +38,13 @@ export async function POST(request: Request) {
 
     const text = await file.text();
     const summary = await importCsv(workspaceId, text);
-    if (summary.errors?.length > 0 && summary.imported === 0 && summary.errors[0]?.message?.includes('1,000 rows')) {
-      return NextResponse.json({ error: { code: 'PAYLOAD_TOO_LARGE', message: summary.errors[0].message } }, { status: 413 });
+    if (summary.errors?.length > 0 && summary.imported === 0) {
+      if (summary.errors[0]?.message?.includes('1,000 rows')) {
+        return NextResponse.json({ error: { code: 'PAYLOAD_TOO_LARGE', message: summary.errors[0].message } }, { status: 413 });
+      }
+      if (summary.errors[0]?.message?.includes('Failed to parse CSV')) {
+        return NextResponse.json({ error: { code: 'IMPORT_ERROR', message: 'Failed to parse CSV' } }, { status: 400 });
+      }
     }
     return NextResponse.json({ data: summary });
   } catch (e: any) {
