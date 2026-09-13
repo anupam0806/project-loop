@@ -48,10 +48,20 @@ export class FreeAIProvider implements AIProvider {
       evidence: Array<{ id: string; text: string; channel: string }>;
     }
   ): Promise<AskLoopResponse> {
-    return this.geminiProvider.askLoop(prompt, context);
+    try {
+      return await this.geminiProvider.askLoop(prompt, context);
+    } catch (geminiErr) {
+      console.warn('Gemini askLoop failed, falling back to Groq:', geminiErr);
+      return this.groqProvider.askLoop(prompt, context);
+    }
   }
 
   async generateReportNarrative(input: ReportNarrativeInput): Promise<ReportNarrativeResult> {
-    return this.geminiProvider.generateReportNarrative(input);
+    try {
+      return await this.geminiProvider.generateReportNarrative(input);
+    } catch (geminiErr) {
+      console.warn('Gemini generateReportNarrative failed, falling back to Groq:', geminiErr);
+      return this.groqProvider.generateReportNarrative(input);
+    }
   }
 }

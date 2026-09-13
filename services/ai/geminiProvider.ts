@@ -58,7 +58,7 @@ export class GeminiProvider implements AIProvider {
     temperature = 0.1
   ): Promise<{ contentText: string; usage?: ProviderUsageMetadata }> {
     const apiKey = this.getApiKey();
-    const candidateModels = [this.model, 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'].filter(
+    const candidateModels = [this.model, 'gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-pro'].filter(
       (m, idx, arr) => arr.indexOf(m) === idx
     );
 
