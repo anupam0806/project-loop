@@ -3,6 +3,7 @@ import { feedbackCreateSchema, feedbackUpdateSchema } from "../lib/validation/fe
 import { z } from "zod";
 import { classifyAndAssignThemes } from "./ai/classificationService";
 import { embedAndPersist } from "./ai/embeddingService";
+import { AIProvider } from "./ai/aiProvider";
 
 // Allow-listed sort fields per File 04 Section 26
 const ALLOWED_SORT_FIELDS: Record<string, string> = {
@@ -97,12 +98,50 @@ export async function getFeedback(workspaceId: string, id: string) {
       sentiment: true,
       sentimentScore: true,
       featureArea: true,
+      urgency: true,
+      category: true,
       status: true,
       createdAt: true,
       updatedAt: true,
     },
   });
-  return feedback;
+  if (!feedback) return null;
+
+  try {
+    const feedbackThemes = await prisma.feedbackTheme.findMany({
+      where: { feedbackId: id },
+      include: { theme: { select: { id: true, name: true } } },
+    });
+    const populatedThemes = await Promise.all(
+      feedbackThemes.map(async (ft: any) => {
+        if (ft.theme) return ft;
+        const t = await prisma.theme.findUnique({ where: { id: ft.themeId } });
+        return { ...ft, theme: t ? { id: t.id, name: t.name } : { id: ft.themeId, name: 'General' } };
+      })
+    );
+    return {
+      ...feedback,
+      themes: populatedThemes,
+    };
+  } catch {
+    return {
+      ...feedback,
+      themes: [],
+    };
+  }
+}
+
+// Trigger / retry AI analysis for a feedback item without changing its workflow status
+export async function analyzeFeedback(workspaceId: string, id: string, customProvider?: AIProvider) {
+  const feedback = await prisma.feedback.findFirst({
+    where: { id, workspaceId },
+    select: { id: true, text: true, status: true },
+  });
+  if (!feedback) return null;
+
+  await classifyAndAssignThemes(workspaceId, feedback.id, feedback.text, customProvider);
+
+  return getFeedback(workspaceId, id);
 }
 
 // Update feedback with status transition validation

@@ -112,12 +112,29 @@ export default function FeedbackDetailPage() {
   };
 
   const handleRetryAnalysis = async () => {
+    if (!feedback || retryingAI) return;
     setRetryingAI(true);
-    // Refresh feedback detail after retry simulation
-    setTimeout(() => {
-      fetchFeedback();
+    try {
+      const res = await fetch(`/api/feedback/${feedback.id}/analyze`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        const msg = errorData?.error?.message || 'AI analysis failed. Please try again.';
+        throw new Error(msg);
+      }
+
+      const json = await res.json();
+      if (json.data) {
+        setFeedback(json.data);
+      }
+      await fetchFeedback();
+    } catch (err: any) {
+      alert(err.message || 'AI analysis failed. Please try again.');
+    } finally {
       setRetryingAI(false);
-    }, 800);
+    }
   };
 
   return (
