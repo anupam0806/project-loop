@@ -166,3 +166,5 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile, workspaceName: 
     </aside>
   );
 };
+
+export default Sidebar;

@@ -173,8 +173,8 @@ export default function SettingsPage() {
     <AppShell>
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
-          <h1 className="text-xl font-semibold text-primary">Workspace & Settings</h1>
-          <p className="text-xs text-secondary mt-0.5">
+          <h1 className="page-title">Workspace & Settings</h1>
+          <p className="page-description">
             Manage workspace metadata, access control, and team members
           </p>
         </div>
