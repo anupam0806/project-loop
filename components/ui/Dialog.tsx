@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Button } from './Button';
 
 interface DialogProps {
@@ -49,15 +50,25 @@ export const Dialog: React.FC<DialogProps> = ({
         className="w-full max-w-md bg-surface border border-border rounded-DEFAULT shadow-dialog p-5 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div>
-          <h3 id="dialog-title" className="text-base font-semibold text-primary">
-            {title}
-          </h3>
-          {description && (
-            <p className="mt-1 text-xs text-secondary leading-relaxed">
-              {description}
-            </p>
-          )}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h3 id="dialog-title" className="text-base font-semibold text-primary">
+              {title}
+            </h3>
+            {description && (
+              <p className="mt-1 text-xs text-secondary leading-relaxed">
+                {description}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-secondary hover:text-primary p-1 -mr-1 rounded-DEFAULT focus:outline-none focus:ring-2 focus:ring-accent"
+            aria-label="Close dialog"
+          >
+            <XMarkIcon className="w-4 h-4" aria-hidden="true" />
+          </button>
         </div>
 
         {children && <div>{children}</div>}

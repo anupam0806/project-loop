@@ -2,6 +2,12 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import {
+  SparklesIcon,
+  PaperAirplaneIcon,
+  ArrowTopRightOnSquareIcon,
+  ArrowPathIcon,
+} from '@heroicons/react/24/outline';
 import { AppShell } from '../../components/layout/AppShell';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -67,6 +73,9 @@ export default function AskLoopPage() {
       <div className="max-w-3xl mx-auto space-y-6 pt-4">
         {/* Title and Intro */}
         <div className="text-center space-y-1">
+          <div className="inline-flex items-center justify-center p-2 rounded-badge bg-accent/10 text-accent mb-1">
+            <SparklesIcon className="w-5 h-5" aria-hidden="true" />
+          </div>
           <h1 className="page-title">Ask LOOP</h1>
           <p className="page-description">
             Synthesize answers grounded strictly in verified customer feedback evidence
@@ -98,6 +107,7 @@ export default function AskLoopPage() {
                   variant="primary"
                   disabled={loading || !question.trim()}
                 >
+                  <PaperAirplaneIcon className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
                   Ask
                 </Button>
               </div>
@@ -135,6 +145,7 @@ export default function AskLoopPage() {
           <div className="p-5 bg-surface border border-red-200 rounded-DEFAULT space-y-3">
             <p className="text-xs text-negative font-medium">{error}</p>
             <Button variant="secondary" size="sm" onClick={() => handleAsk()}>
+              <ArrowPathIcon className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
               Retry
             </Button>
           </div>
@@ -175,9 +186,10 @@ export default function AskLoopPage() {
                         <p className="text-primary italic">&ldquo;{cite.snippet}&rdquo;</p>
                         <Link
                           href={`/feedback/${cite.feedbackId}`}
-                          className="inline-block text-[11px] text-accent hover:underline font-medium"
+                          className="inline-flex items-center text-[11px] text-accent hover:underline font-medium"
                         >
-                          View feedback item →
+                          View feedback item
+                          <ArrowTopRightOnSquareIcon className="w-3 h-3 ml-1 inline text-secondary" aria-hidden="true" />
                         </Link>
                       </div>
                     ))}

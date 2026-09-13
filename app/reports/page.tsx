@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { PlusIcon, DocumentChartBarIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { AppShell } from '../../components/layout/AppShell';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -117,6 +118,7 @@ export default function ReportsListPage() {
               disabled={!canGenerate}
               onClick={() => setModalOpen(true)}
             >
+              <PlusIcon className="w-4 h-4 mr-1.5" aria-hidden="true" />
               Generate Report
             </Button>
             {!canGenerate && (
@@ -140,6 +142,7 @@ export default function ReportsListPage() {
             action={
               canGenerate ? (
                 <Button variant="primary" size="sm" onClick={() => setModalOpen(true)}>
+                  <PlusIcon className="w-4 h-4 mr-1.5" aria-hidden="true" />
                   Generate First Report
                 </Button>
               ) : undefined
@@ -156,18 +159,22 @@ export default function ReportsListPage() {
                 className="block group"
               >
                 <Card className="hover:border-gray-400/80 transition-colors p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-sm font-semibold text-primary group-hover:text-accent transition-colors">
-                      {report.title}
-                    </h3>
-                    <div className="flex items-center gap-3 text-xs text-secondary mt-1">
-                      <span>Period: {report.period.from} to {report.period.to}</span>
+                  <div className="flex items-start gap-3">
+                    <DocumentChartBarIcon className="w-5 h-5 text-accent shrink-0 mt-0.5" aria-hidden="true" />
+                    <div>
+                      <h3 className="text-sm font-semibold text-primary group-hover:text-accent transition-colors">
+                        {report.title}
+                      </h3>
+                      <div className="flex items-center gap-3 text-xs text-secondary mt-1">
+                        <span>Period: {report.period.from} to {report.period.to}</span>
+                      </div>
                     </div>
                   </div>
                   <div className="text-xs text-secondary sm:text-right shrink-0">
                     <span>Generated on {new Date(report.createdAt).toLocaleDateString()}</span>
-                    <span className="block text-accent font-medium text-[11px] group-hover:underline mt-0.5">
-                      View report →
+                    <span className="flex items-center sm:justify-end text-accent font-medium text-[11px] group-hover:underline mt-0.5">
+                      View report
+                      <ArrowRightIcon className="w-3.5 h-3.5 ml-1 inline" aria-hidden="true" />
                     </span>
                   </div>
                 </Card>

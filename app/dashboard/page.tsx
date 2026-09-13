@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { ArrowRightIcon } from '@heroicons/react/24/outline';
 import { AppShell } from '../../components/layout/AppShell';
 import { Card, CardHeader } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
@@ -436,8 +437,9 @@ export default function DashboardPage() {
                   title="Recent Feedback"
                   subtitle="Latest customer submissions"
                   action={
-                    <Link href="/feedback" className="text-xs text-accent hover:underline font-medium">
+                    <Link href="/feedback" className="inline-flex items-center text-xs text-accent hover:underline font-medium">
                       View inbox
+                      <ArrowRightIcon className="w-3.5 h-3.5 ml-1 inline" aria-hidden="true" />
                     </Link>
                   }
                 />

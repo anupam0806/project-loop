@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Button } from './Button';
 
 interface PaginationProps {
@@ -45,6 +46,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={() => onPageChange(currentPage - 1)}
           aria-label="Previous page"
         >
+          <ChevronLeftIcon className="w-3.5 h-3.5 mr-1 inline" aria-hidden="true" />
           Previous
         </Button>
         <span className="px-2 font-medium text-primary">
@@ -58,6 +60,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           aria-label="Next page"
         >
           Next
+          <ChevronRightIcon className="w-3.5 h-3.5 ml-1 inline" aria-hidden="true" />
         </Button>
       </div>
     </div>

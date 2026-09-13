@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 
@@ -57,10 +58,11 @@ export default function LoginPage() {
 
         {error && (
           <div
-            className="p-3 text-xs bg-red-50 border border-red-200 text-negative rounded-badge"
+            className="p-3 text-xs bg-red-50 border border-red-200 text-negative rounded-badge flex items-center gap-2"
             role="alert"
           >
-            {error}
+            <ExclamationCircleIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>{error}</span>
           </div>
         )}
 

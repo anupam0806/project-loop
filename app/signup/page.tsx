@@ -1,18 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 
 export default function SignupPage() {
   const router = useRouter();
   const [name, setName] = useState('');
-  const [workspaceName, setWorkspaceName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [workspaceName, setWorkspaceName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +21,7 @@ export default function SignupPage() {
     e.preventDefault();
     setError(null);
 
-    if (!name || !workspaceName || !email || !password) {
+    if (!name || !email || !password || !workspaceName) {
       setError('Please fill in all fields.');
       return;
     }
@@ -35,18 +36,23 @@ export default function SignupPage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, workspaceName, email, password }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+          workspaceName: workspaceName.trim(),
+        }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data?.error?.message || 'Failed to create workspace.');
+        setError(data?.error?.message || 'Registration failed.');
         setLoading(false);
         return;
       }
 
-      // Auto sign in user as newly minted ADMIN
+      // Automatically authenticate after successful registration
       const authRes = await signIn('credentials', {
         email,
         password,
@@ -78,10 +84,11 @@ export default function SignupPage() {
 
         {error && (
           <div
-            className="p-3 text-xs bg-red-50 border border-red-200 text-negative rounded-badge"
+            className="p-3 text-xs bg-red-50 border border-red-200 text-negative rounded-badge flex items-center gap-2"
             role="alert"
           >
-            {error}
+            <ExclamationCircleIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>{error}</span>
           </div>
         )}
 

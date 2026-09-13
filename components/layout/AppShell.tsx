@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { Bars3Icon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import { Sidebar } from './Sidebar';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -75,9 +76,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
               onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
               aria-label="Toggle navigation menu"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <Bars3Icon className="w-5 h-5" aria-hidden="true" />
             </button>
             {workspaceName && (
               <div className="flex items-center gap-2">
@@ -97,6 +96,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
               onClick={() => signOut({ callbackUrl: '/login' })}
               className="text-xs"
             >
+              <ArrowRightOnRectangleIcon className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
               Sign out
             </Button>
           </div>

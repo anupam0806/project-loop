@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { PlusIcon, ArrowUpTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { AppShell } from '../../components/layout/AppShell';
 import { Button } from '../../components/ui/Button';
 import { SearchInput } from '../../components/ui/SearchInput';
@@ -114,7 +115,8 @@ function FeedbackInboxContent() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to create feedback item.');
+        const json = await res.json();
+        throw new Error(json?.error?.message || 'Failed to create feedback item.');
       }
 
       setCreateModalOpen(false);
@@ -122,7 +124,7 @@ function FeedbackInboxContent() {
       setNewFeatureArea('');
       fetchFeedback();
     } catch (err: any) {
-      alert(err.message || 'Creation error');
+      alert(err.message || 'Creation failed');
     } finally {
       setSubmitting(false);
     }
@@ -130,6 +132,7 @@ function FeedbackInboxContent() {
 
   const handleImportCsv = async () => {
     if (!csvFile) return;
+
     setImporting(true);
     try {
       const formData = new FormData();
@@ -140,10 +143,12 @@ function FeedbackInboxContent() {
         body: formData,
       });
 
+      const json = await res.json();
       if (!res.ok) {
-        throw new Error('Failed to parse and import CSV file.');
+        throw new Error(json?.error?.message || 'Import failed');
       }
 
+      alert(`Successfully imported ${json.data?.importedCount || 0} feedback items.`);
       setImportModalOpen(false);
       setCsvFile(null);
       fetchFeedback();
@@ -185,6 +190,7 @@ function FeedbackInboxContent() {
                 disabled={isViewer}
                 onClick={() => setImportModalOpen(true)}
               >
+                <ArrowUpTrayIcon className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 Import CSV
               </Button>
               {isViewer && (
@@ -202,6 +208,7 @@ function FeedbackInboxContent() {
                 disabled={isViewer}
                 onClick={() => setCreateModalOpen(true)}
               >
+                <PlusIcon className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 Add Feedback
               </Button>
               {isViewer && (

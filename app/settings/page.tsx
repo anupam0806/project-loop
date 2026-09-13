@@ -2,6 +2,13 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import {
+  BuildingOffice2Icon,
+  UserGroupIcon,
+  PlusIcon,
+  PencilSquareIcon,
+  TrashIcon,
+} from '@heroicons/react/24/outline';
 import { AppShell } from '../../components/layout/AppShell';
 import { Card, CardHeader } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -189,7 +196,10 @@ export default function SettingsPage() {
           <div className="space-y-6">
             {/* Workspace Profile Card */}
             <Card className="p-5 space-y-4">
-              <CardHeader title="Workspace Profile" subtitle="General workspace details" />
+              <div className="flex items-center gap-2">
+                <BuildingOffice2Icon className="w-5 h-5 text-secondary" aria-hidden="true" />
+                <CardHeader title="Workspace Profile" subtitle="General workspace details" />
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div>
                   <span className="text-secondary block font-medium">Workspace Name</span>
@@ -212,15 +222,19 @@ export default function SettingsPage() {
             {isAdmin ? (
               <Card className="p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <CardHeader
-                    title="Team Members"
-                    subtitle="Users with access to this workspace and their role permissions"
-                  />
+                  <div className="flex items-center gap-2">
+                    <UserGroupIcon className="w-5 h-5 text-secondary" aria-hidden="true" />
+                    <CardHeader
+                      title="Team Members"
+                      subtitle="Users with access to this workspace and their role permissions"
+                    />
+                  </div>
                   <Button
                     variant="primary"
                     size="sm"
                     onClick={() => setInviteModalOpen(true)}
                   >
+                    <PlusIcon className="w-4 h-4 mr-1.5" aria-hidden="true" />
                     Add User
                   </Button>
                 </div>
@@ -258,8 +272,9 @@ export default function SettingsPage() {
                                 setEditingRole(u.role);
                                 setEditModalOpen(true);
                               }}
-                              className="text-xs text-accent hover:underline font-medium"
+                              className="inline-flex items-center text-xs text-accent hover:underline font-medium"
                             >
+                              <PencilSquareIcon className="w-3.5 h-3.5 mr-0.5" aria-hidden="true" />
                               Edit role
                             </button>
                             {u.id !== currentUserId && (
@@ -269,8 +284,9 @@ export default function SettingsPage() {
                                   setUserToDelete(u);
                                   setDeleteModalOpen(true);
                                 }}
-                                className="text-xs text-negative hover:underline font-medium"
+                                className="inline-flex items-center text-xs text-negative hover:underline font-medium"
                               >
+                                <TrashIcon className="w-3.5 h-3.5 mr-0.5" aria-hidden="true" />
                                 Delete
                               </button>
                             )}

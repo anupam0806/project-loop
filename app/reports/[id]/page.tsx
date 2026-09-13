@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { ArrowLeftIcon, TagIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { AppShell } from '../../../components/layout/AppShell';
 import { Card, CardHeader } from '../../../components/ui/Card';
 import { Skeleton } from '../../../components/ui/Skeleton';
@@ -78,9 +79,7 @@ export default function ReportDetailPage() {
             href="/reports"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-secondary hover:text-primary transition-colors"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
+            <ArrowLeftIcon className="w-3.5 h-3.5" aria-hidden="true" />
             Back to Reports
           </Link>
         </div>
@@ -227,7 +226,8 @@ export default function ReportDetailPage() {
                 {/* Key Theme Observations */}
                 {report.narrative.keyThemes && report.narrative.keyThemes.length > 0 && (
                   <div className="pt-4 border-t border-border">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-secondary mb-3">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-secondary mb-3 flex items-center">
+                      <TagIcon className="w-3.5 h-3.5 mr-1 text-secondary" aria-hidden="true" />
                       Theme Observations
                     </h3>
                     <div className="space-y-3">
@@ -258,7 +258,8 @@ export default function ReportDetailPage() {
                 {/* Actionable Recommendations */}
                 {report.narrative.recommendations && report.narrative.recommendations.length > 0 && (
                   <div className="pt-4 border-t border-border">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-secondary mb-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-secondary mb-2 flex items-center">
+                      <CheckCircleIcon className="w-3.5 h-3.5 mr-1 text-accent" aria-hidden="true" />
                       Actionable Recommendations
                     </h3>
                     <ul className="space-y-1.5 list-disc list-inside text-xs text-primary">

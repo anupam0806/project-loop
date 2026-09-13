@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { ArrowLeftIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { AppShell } from '../../../components/layout/AppShell';
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
@@ -128,9 +129,7 @@ export default function FeedbackDetailPage() {
             href="/feedback"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-secondary hover:text-primary transition-colors"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
+            <ArrowLeftIcon className="w-3.5 h-3.5" aria-hidden="true" />
             Back to Feedback Inbox
           </Link>
         </div>
@@ -264,6 +263,7 @@ export default function FeedbackDetailPage() {
                   size="sm"
                   onClick={() => setDeleteModalOpen(true)}
                 >
+                  <TrashIcon className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
                   Delete Feedback
                 </Button>
               </div>

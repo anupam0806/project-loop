@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { TagIcon } from '@heroicons/react/24/outline';
 import { AppShell } from '../../components/layout/AppShell';
 import { Card } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
@@ -102,9 +103,12 @@ export default function ThemesPage() {
                   <Card className="h-full flex flex-col justify-between hover:border-gray-400/80 transition-colors p-4">
                     <div>
                       <div className="flex items-start justify-between gap-2 mb-1">
-                        <h3 className="text-sm font-semibold text-primary group-hover:text-accent transition-colors">
-                          {theme.name}
-                        </h3>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <TagIcon className="w-4 h-4 text-secondary group-hover:text-accent transition-colors shrink-0" aria-hidden="true" />
+                          <h3 className="text-sm font-semibold text-primary group-hover:text-accent transition-colors truncate">
+                            {theme.name}
+                          </h3>
+                        </div>
                         <span className="text-xs font-semibold text-secondary px-2 py-0.5 bg-gray-100 rounded-badge border border-border shrink-0">
                           {count} {count === 1 ? 'item' : 'items'}
                         </span>
