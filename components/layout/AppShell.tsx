@@ -15,7 +15,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [workspaceName, setWorkspaceName] = useState<string>('Loading...');
+  const [workspaceName, setWorkspaceName] = useState<string>('');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -32,7 +32,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             setWorkspaceName(data.data.name);
           }
         })
-        .catch(() => setWorkspaceName('Workspace'));
+        .catch(() => {});
     }
   }, [session]);
 
@@ -43,7 +43,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop Persistent Sidebar */}
       <div className="hidden lg:block h-full">
-        <Sidebar />
+        <Sidebar workspaceName={workspaceName} />
       </div>
 
       {/* Mobile Drawer Navigation Backdrop */}
@@ -61,7 +61,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <Sidebar onCloseMobile={() => setMobileDrawerOpen(false)} />
+        <Sidebar workspaceName={workspaceName} onCloseMobile={() => setMobileDrawerOpen(false)} />
       </div>
 
       {/* Main Content Area */}
@@ -79,10 +79,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <div className="flex items-center gap-2">
-              <span className="text-xs uppercase tracking-wider text-secondary font-semibold">Workspace</span>
-              <span className="text-sm font-semibold text-primary">{workspaceName}</span>
-            </div>
+            {workspaceName && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-secondary">{workspaceName}</span>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
