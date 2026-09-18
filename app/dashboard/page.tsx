@@ -182,25 +182,59 @@ export default function DashboardPage() {
                       const timeline = data.volumeOverTime;
                       const maxVal = Math.max(...timeline.map((v) => v.count), 1);
                       const width = 460;
-                      const height = 120;
-                      const paddingX = 16;
-                      const paddingY = 16;
+                      const height = 132;
+                      const paddingX = 20;
+                      const paddingTop = 12;
+                      const paddingBottom = 26;
+                      const baselineY = height - paddingBottom;
                       const usableW = width - paddingX * 2;
-                      const usableH = height - paddingY * 2;
+                      const usableH = baselineY - paddingTop;
+
+                      const formatShortDate = (dateStr: string): string => {
+                        if (!dateStr) return '';
+                        const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                        if (match) {
+                          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                          const month = months[parseInt(match[2], 10) - 1];
+                          const day = parseInt(match[3], 10);
+                          if (month && !isNaN(day)) return `${month} ${day}`;
+                        }
+                        const d = new Date(dateStr);
+                        if (!isNaN(d.getTime())) {
+                          return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        }
+                        return dateStr;
+                      };
 
                       const points = timeline.map((item, idx) => {
                         const x =
                           timeline.length > 1
                             ? paddingX + (idx / (timeline.length - 1)) * usableW
                             : width / 2;
-                        const y = height - paddingY - (item.count / maxVal) * usableH;
+                        const y = baselineY - (item.count / maxVal) * usableH;
                         return { x, y, ...item };
                       });
 
                       const pathData = points
                         .map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`)
                         .join(' ');
-                      const areaData = `${pathData} L ${points[points.length - 1].x.toFixed(1)} ${height - paddingY} L ${points[0].x.toFixed(1)} ${height - paddingY} Z`;
+                      const areaData = `${pathData} L ${points[points.length - 1].x.toFixed(1)} ${baselineY} L ${points[0].x.toFixed(1)} ${baselineY} Z`;
+
+                      // Select 5-6 evenly spaced tick points across the timeline (~every 5-7 days for 30d range)
+                      const tickTarget = timeline.length >= 20 ? 6 : Math.min(Math.max(timeline.length, 2), 5);
+                      const tickIndices = Array.from(
+                        new Set(
+                          Array.from({ length: tickTarget }, (_, i) =>
+                            Math.round((i * (timeline.length - 1)) / (tickTarget - 1))
+                          )
+                        )
+                      );
+                      const ticks = tickIndices.map((idx) => ({
+                        idx,
+                        x: points[idx].x,
+                        date: timeline[idx].date,
+                        label: formatShortDate(timeline[idx].date),
+                      }));
 
                       return (
                         <div className="w-full">
@@ -219,25 +253,25 @@ export default function DashboardPage() {
                             {/* Horizontal Grid lines */}
                             <line
                               x1={paddingX}
-                              y1={paddingY}
+                              y1={paddingTop}
                               x2={width - paddingX}
-                              y2={paddingY}
+                              y2={paddingTop}
                               stroke="#e5e7eb"
                               strokeDasharray="3 3"
                             />
                             <line
                               x1={paddingX}
-                              y1={height / 2}
+                              y1={paddingTop + usableH / 2}
                               x2={width - paddingX}
-                              y2={height / 2}
+                              y2={paddingTop + usableH / 2}
                               stroke="#e5e7eb"
                               strokeDasharray="3 3"
                             />
                             <line
                               x1={paddingX}
-                              y1={height - paddingY}
+                              y1={baselineY}
                               x2={width - paddingX}
-                              y2={height - paddingY}
+                              y2={baselineY}
                               stroke="#e5e7eb"
                             />
 
@@ -267,6 +301,42 @@ export default function DashboardPage() {
                                 <title>{`${pt.date}: ${pt.count} feedback items`}</title>
                               </circle>
                             ))}
+
+                            {/* X-Axis Ticks & Date Labels */}
+                            <g aria-label="X-axis date labels">
+                              {ticks.map((tick, i) => {
+                                const textAnchor =
+                                  i === 0 ? 'start' : i === ticks.length - 1 ? 'end' : 'middle';
+                                const isDesktopOnly = ticks.length >= 5 && (i === 1 || i === 3);
+
+                                return (
+                                  <g
+                                    key={tick.idx}
+                                    className={isDesktopOnly ? 'hidden sm:inline' : undefined}
+                                  >
+                                    {/* Tick Mark */}
+                                    <line
+                                      x1={tick.x}
+                                      y1={baselineY}
+                                      x2={tick.x}
+                                      y2={baselineY + 4}
+                                      stroke="#e5e7eb"
+                                      strokeWidth="1"
+                                    />
+                                    {/* Date Label */}
+                                    <text
+                                      x={tick.x}
+                                      y={baselineY + 16}
+                                      textAnchor={textAnchor}
+                                      fill="currentColor"
+                                      className="text-secondary text-[10px] font-medium select-none"
+                                    >
+                                      {tick.label}
+                                    </text>
+                                  </g>
+                                );
+                              })}
+                            </g>
                           </svg>
 
                           <div className="flex justify-between text-[10px] text-secondary border-t border-border pt-1.5 mt-1">
