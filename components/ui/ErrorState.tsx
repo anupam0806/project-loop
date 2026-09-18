@@ -14,8 +14,8 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   onRetry,
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-center bg-surface border border-red-200 rounded-DEFAULT">
-      <div className="w-10 h-10 mb-3 rounded-full bg-red-50 flex items-center justify-center text-negative">
+    <div className="flex flex-col items-center justify-center p-8 text-center bg-surface border border-red-200 dark:border-red-900/60 rounded-DEFAULT">
+      <div className="w-10 h-10 mb-3 rounded-full bg-red-50 dark:bg-red-950/40 flex items-center justify-center text-negative">
         <ExclamationTriangleIcon className="w-5 h-5" aria-hidden="true" />
       </div>
       <h4 className="text-sm font-semibold text-primary">{title}</h4>

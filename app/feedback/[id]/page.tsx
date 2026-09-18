@@ -190,7 +190,7 @@ export default function FeedbackDetailPage() {
                   <span className="font-semibold text-primary">Status:</span>
                   {canEdit ? (
                     <div className="inline-flex items-center gap-1.5 flex-wrap">
-                      <div className="inline-flex items-center p-0.5 bg-gray-100/90 border border-border rounded-badge gap-0.5 text-xs" role="group" aria-label="Status workflow">
+                      <div className="inline-flex items-center p-0.5 bg-surface-muted border border-border rounded-badge gap-0.5 text-xs" role="group" aria-label="Status workflow">
                         {(['NEW', 'REVIEWED', 'ACTIONED', 'RESOLVED'] as const).map((st) => {
                           const isActive = feedback.status === st;
                           return (
@@ -292,7 +292,7 @@ export default function FeedbackDetailPage() {
                       <Link
                         key={ft.theme.id}
                         href={`/feedback?theme=${encodeURIComponent(ft.theme.name)}`}
-                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-badge bg-gray-100 text-primary hover:bg-accent-soft hover:text-accent border border-border transition-colors"
+                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-badge bg-surface-muted text-primary hover:bg-accent-soft hover:text-accent border border-border transition-colors"
                       >
                         {ft.theme.name}
                       </Link>

@@ -7,6 +7,7 @@ import { Bars3Icon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outlin
 import { Sidebar } from './Sidebar';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { ThemeSwitch } from '../ui/ThemeSwitch';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -86,6 +87,8 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           </div>
 
           <div className="flex items-center gap-3">
+            <ThemeSwitch variant="switch" showLabels={false} />
+            <div className="h-4 w-px bg-border hidden sm:block" aria-hidden="true" />
             <div className="hidden sm:flex items-center gap-2 text-right">
               <span className="text-xs font-medium text-primary">{userName}</span>
               <Badge type="role" value={userRole} />

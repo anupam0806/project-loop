@@ -8,6 +8,10 @@ import {
   PlusIcon,
   PencilSquareIcon,
   TrashIcon,
+  SwatchIcon,
+  SunIcon,
+  MoonIcon,
+  ComputerDesktopIcon,
 } from '@heroicons/react/24/outline';
 import { AppShell } from '../../components/layout/AppShell';
 import { Card, CardHeader } from '../../components/ui/Card';
@@ -18,6 +22,8 @@ import { Select } from '../../components/ui/Select';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { Dialog } from '../../components/ui/Dialog';
+import { ThemeSwitch } from '../../components/ui/ThemeSwitch';
+import { useTheme } from '../../components/ThemeProvider';
 
 interface WorkspaceInfo {
   id: string;
@@ -35,6 +41,7 @@ interface WorkspaceUser {
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const { theme, setTheme } = useTheme();
   const currentUserId = (session?.user as any)?.id;
   const userRole = (session?.user as any)?.role || 'VIEWER';
   const isAdmin = userRole === 'ADMIN';
@@ -218,6 +225,100 @@ export default function SettingsPage() {
               </div>
             </Card>
 
+            {/* Appearance & Theme Settings Card */}
+            <Card className="p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <SwatchIcon className="w-5 h-5 text-secondary" aria-hidden="true" />
+                  <CardHeader
+                    title="Appearance & Theme"
+                    subtitle="Switch between light and dark mode or follow your system preferences"
+                  />
+                </div>
+                <ThemeSwitch variant="switch" showLabels={true} />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                {/* Light mode selection card */}
+                <button
+                  type="button"
+                  onClick={() => setTheme('light')}
+                  className={`p-3.5 rounded-DEFAULT border text-left transition-all flex flex-col justify-between ${
+                    theme === 'light'
+                      ? 'border-accent ring-2 ring-accent/20 bg-surface'
+                      : 'border-border hover:border-accent/40 bg-surface'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                      <SunIcon className="w-4 h-4" />
+                    </div>
+                    {theme === 'light' && (
+                      <span className="text-[10px] font-semibold text-accent bg-accent-soft px-1.5 py-0.5 rounded-badge">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-primary block">Light Mode</span>
+                    <p className="text-[11px] text-secondary mt-0.5">Clean, crisp off-white interface with dark typography</p>
+                  </div>
+                </button>
+
+                {/* Dark mode selection card */}
+                <button
+                  type="button"
+                  onClick={() => setTheme('dark')}
+                  className={`p-3.5 rounded-DEFAULT border text-left transition-all flex flex-col justify-between ${
+                    theme === 'dark'
+                      ? 'border-accent ring-2 ring-accent/20 bg-surface'
+                      : 'border-border hover:border-accent/40 bg-surface'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-8 h-8 rounded-full bg-indigo-500/15 text-accent flex items-center justify-center">
+                      <MoonIcon className="w-4 h-4" />
+                    </div>
+                    {theme === 'dark' && (
+                      <span className="text-[10px] font-semibold text-accent bg-accent-soft px-1.5 py-0.5 rounded-badge">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-primary block">Dark Mode</span>
+                    <p className="text-[11px] text-secondary mt-0.5">Calm slate & obsidian palette designed for low-light focus</p>
+                  </div>
+                </button>
+
+                {/* System mode selection card */}
+                <button
+                  type="button"
+                  onClick={() => setTheme('system')}
+                  className={`p-3.5 rounded-DEFAULT border text-left transition-all flex flex-col justify-between ${
+                    theme === 'system'
+                      ? 'border-accent ring-2 ring-accent/20 bg-surface'
+                      : 'border-border hover:border-accent/40 bg-surface'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-8 h-8 rounded-full bg-surface-muted text-secondary flex items-center justify-center">
+                      <ComputerDesktopIcon className="w-4 h-4" />
+                    </div>
+                    {theme === 'system' && (
+                      <span className="text-[10px] font-semibold text-accent bg-accent-soft px-1.5 py-0.5 rounded-badge">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-primary block">System Default</span>
+                    <p className="text-[11px] text-secondary mt-0.5">Sync automatically with your device system appearance</p>
+                  </div>
+                </button>
+              </div>
+            </Card>
+
             {/* Team Members Management (ADMIN only) */}
             {isAdmin ? (
               <Card className="p-5 space-y-4">
@@ -251,7 +352,7 @@ export default function SettingsPage() {
                     </thead>
                     <tbody className="divide-y divide-border">
                       {users.map((u) => (
-                        <tr key={u.id} className="hover:bg-gray-50/70 transition-colors">
+                        <tr key={u.id} className="hover:bg-surface-muted/50 transition-colors">
                           <td className="py-2.5 px-3 font-medium text-primary">
                             {u.name}
                             {u.id === currentUserId && (

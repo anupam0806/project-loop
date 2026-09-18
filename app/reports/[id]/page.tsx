@@ -232,7 +232,7 @@ export default function ReportDetailPage() {
                     </h3>
                     <div className="space-y-3">
                       {report.narrative.keyThemes.map((item, idx) => (
-                        <div key={idx} className="p-3 bg-gray-50/70 border border-border rounded-badge">
+                        <div key={idx} className="p-3 bg-surface-muted/60 border border-border rounded-badge">
                           <h4 className="text-xs font-semibold text-primary">{item.name}</h4>
                           <p className="text-xs text-secondary mt-1 leading-relaxed">
                             {item.observation}
@@ -282,7 +282,7 @@ export default function ReportDetailPage() {
                       {report.narrative.quotes.map((q, idx) => (
                         <div
                           key={idx}
-                          className="p-3 bg-gray-50 border border-border rounded-badge text-xs space-y-1"
+                          className="p-3 bg-surface-muted/60 border border-border rounded-badge text-xs space-y-1"
                         >
                           <blockquote className="text-primary italic">
                             &ldquo;{q.quote}&rdquo;

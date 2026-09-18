@@ -323,7 +323,7 @@ function FeedbackInboxContent() {
             <div className="hidden sm:block bg-surface border border-border rounded-DEFAULT overflow-hidden shadow-card">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-gray-50/70 border-b border-border text-[11px] font-semibold text-secondary uppercase tracking-wider">
+                  <tr className="bg-surface-muted/50 border-b border-border text-[11px] font-semibold text-secondary uppercase tracking-wider">
                     <th className="py-2.5 px-4 w-1/2">Feedback</th>
                     <th className="py-2.5 px-3">Channel</th>
                     <th className="py-2.5 px-3">Sentiment</th>
@@ -335,7 +335,7 @@ function FeedbackInboxContent() {
                   {feedbacks.map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-gray-50/70 transition-colors group cursor-pointer"
+                      className="hover:bg-surface-muted/50 transition-colors group cursor-pointer"
                       onClick={() => {
                         router.push(`/feedback/${item.id}`);
                       }}
@@ -349,7 +349,7 @@ function FeedbackInboxContent() {
                           {item.text}
                         </Link>
                         {item.featureArea && (
-                          <span className="inline-block mt-1 text-[11px] text-secondary bg-gray-100 px-1.5 py-0.5 rounded">
+                          <span className="inline-block mt-1 text-[11px] text-secondary bg-surface-muted px-1.5 py-0.5 rounded">
                             {item.featureArea}
                           </span>
                         )}
@@ -382,7 +382,7 @@ function FeedbackInboxContent() {
                 <Link
                   key={item.id}
                   href={`/feedback/${item.id}`}
-                  className="block bg-surface border border-border rounded-DEFAULT p-3.5 shadow-card hover:border-gray-300 transition-colors"
+                  className="block bg-surface border border-border rounded-DEFAULT p-3.5 shadow-card hover:border-accent/40 transition-colors"
                 >
                   <p className="text-sm font-normal text-primary line-clamp-3 mb-2">{item.text}</p>
                   <div className="flex flex-wrap items-center gap-1.5 text-xs text-secondary">
@@ -475,7 +475,7 @@ function FeedbackInboxContent() {
               type="file"
               accept=".csv"
               onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
-              className="w-full text-xs text-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-badge file:border file:border-border file:text-xs file:font-medium file:bg-surface hover:file:bg-gray-50"
+              className="w-full text-xs text-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded-badge file:border file:border-border file:text-xs file:font-medium file:bg-surface hover:file:bg-surface-muted"
             />
             <p className="text-[11px] text-secondary">
               Expected CSV columns: <code>text</code>, <code>channel</code> (optional: <code>sentiment</code>, <code>featureArea</code>).

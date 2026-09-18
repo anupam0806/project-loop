@@ -100,7 +100,7 @@ export default function ThemesPage() {
                   href={`/feedback?featureArea=${encodeURIComponent(theme.name)}`}
                   className="block group"
                 >
-                  <Card className="h-full flex flex-col justify-between hover:border-gray-400/80 transition-colors p-4">
+                  <Card className="h-full flex flex-col justify-between hover:border-accent/40 transition-colors p-4">
                     <div>
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <div className="flex items-center gap-1.5 min-w-0">
@@ -109,7 +109,7 @@ export default function ThemesPage() {
                             {theme.name}
                           </h3>
                         </div>
-                        <span className="text-xs font-semibold text-secondary px-2 py-0.5 bg-gray-100 rounded-badge border border-border shrink-0">
+                        <span className="text-xs font-semibold text-secondary px-2 py-0.5 bg-surface-muted rounded-badge border border-border shrink-0">
                           {count} {count === 1 ? 'item' : 'items'}
                         </span>
                       </div>
@@ -126,7 +126,7 @@ export default function ThemesPage() {
                         <span>Sentiment distribution</span>
                         <span>{sents.positive} pos / {sents.negative} neg</span>
                       </div>
-                      <div className="h-1.5 w-full flex rounded-full overflow-hidden bg-gray-100">
+                      <div className="h-1.5 w-full flex rounded-full overflow-hidden bg-surface-muted">
                         {posPct > 0 && <div style={{ width: `${posPct}%` }} className="bg-positive" />}
                         {neuPct > 0 && <div style={{ width: `${neuPct}%` }} className="bg-neutralSentiment" />}
                         {mixPct > 0 && <div style={{ width: `${mixPct}%` }} className="bg-warning" />}

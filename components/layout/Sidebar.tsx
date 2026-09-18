@@ -13,6 +13,7 @@ import {
   Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import { Badge } from '../ui/Badge';
+import { ThemeSwitch } from '../ui/ThemeSwitch';
 
 interface SidebarProps {
   onCloseMobile?: () => void;
@@ -115,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile, workspaceName: 
               className={`flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-badge transition-colors ${
                 isActive
                   ? 'bg-accent-soft text-accent'
-                  : 'text-secondary hover:text-primary hover:bg-gray-100/70'
+                  : 'text-secondary hover:text-primary hover:bg-surface-muted'
               }`}
             >
               <span className={isActive ? 'text-accent' : 'text-secondary'}>{item.icon}</span>
@@ -125,9 +126,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile, workspaceName: 
         })}
       </nav>
 
-      {/* Sidebar Footer: Real Logged-in User & Role (Calm UI User Profile) */}
-      <div className="p-3 border-t border-border bg-surface">
-        <div className="flex items-center gap-2.5 px-2 py-2 rounded-badge bg-gray-50/70 border border-border/60">
+      {/* Sidebar Footer: Real Logged-in User & Role + Theme Switch */}
+      <div className="p-3 border-t border-border bg-surface space-y-2.5">
+        <div className="flex items-center justify-between px-1 text-xs text-secondary">
+          <span className="font-semibold text-[11px] uppercase tracking-wider text-secondary">Theme</span>
+          <ThemeSwitch variant="switch" showLabels={false} />
+        </div>
+
+        <div className="flex items-center gap-2.5 px-2 py-2 rounded-badge bg-surface-muted/60 border border-border/60">
           <div className="w-7 h-7 rounded-full bg-accent/10 text-accent font-semibold text-xs flex items-center justify-center shrink-0">
             {userName.charAt(0).toUpperCase()}
           </div>

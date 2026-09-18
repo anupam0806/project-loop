@@ -122,7 +122,7 @@ export default function AskLoopPage() {
                   type="button"
                   onClick={() => handleAsk(sq)}
                   disabled={loading}
-                  className="text-xs text-secondary hover:text-primary bg-gray-100 hover:bg-gray-200/80 px-2.5 py-1 rounded-badge transition-colors text-left"
+                  className="text-xs text-secondary hover:text-accent bg-surface-muted hover:bg-accent-soft px-2.5 py-1 rounded-badge transition-colors text-left"
                 >
                   {sq}
                 </button>
@@ -181,7 +181,7 @@ export default function AskLoopPage() {
                     {result.citations.map((cite, idx) => (
                       <div
                         key={idx}
-                        className="p-2.5 bg-gray-50 border border-border rounded-badge text-xs space-y-1"
+                        className="p-2.5 bg-surface-muted/60 border border-border rounded-badge text-xs space-y-1"
                       >
                         <p className="text-primary italic">&ldquo;{cite.snippet}&rdquo;</p>
                         <Link

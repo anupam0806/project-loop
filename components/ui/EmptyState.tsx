@@ -14,7 +14,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ title, description, acti
       {icon ? (
         <div className="mb-3 text-secondary">{icon}</div>
       ) : (
-        <div className="w-10 h-10 mb-3 rounded-full bg-gray-100 flex items-center justify-center text-secondary">
+        <div className="w-10 h-10 mb-3 rounded-full bg-surface-muted flex items-center justify-center text-secondary">
           <InboxIcon className="w-5 h-5" aria-hidden="true" />
         </div>
       )}

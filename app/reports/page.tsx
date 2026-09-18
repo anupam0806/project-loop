@@ -158,7 +158,7 @@ export default function ReportsListPage() {
                 href={`/reports/${report.id}`}
                 className="block group"
               >
-                <Card className="hover:border-gray-400/80 transition-colors p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <Card className="hover:border-accent/40 transition-colors p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <DocumentChartBarIcon className="w-5 h-5 text-accent shrink-0 mt-0.5" aria-hidden="true" />
                     <div>
@@ -226,7 +226,7 @@ export default function ReportsListPage() {
             </div>
 
             {generating && (
-              <div className="p-3 bg-gray-50 border border-border rounded-badge text-xs text-secondary space-y-1">
+              <div className="p-3 bg-surface-muted/60 border border-border rounded-badge text-xs text-secondary space-y-1">
                 <p className="font-medium text-primary">Calculating facts and synthesizing narrative…</p>
                 <p className="text-[11px]">This may take a few seconds as Claude evaluates customer feedback evidence.</p>
               </div>

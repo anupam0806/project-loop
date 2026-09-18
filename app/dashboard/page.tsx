@@ -400,7 +400,7 @@ export default function DashboardPage() {
                               </Link>
                               <div className="flex items-center gap-2">
                                 <span className="text-secondary text-[11px]">{pctOfTotal}% of total</span>
-                                <span className="font-semibold px-2 py-0.5 rounded-badge bg-gray-100 text-secondary border border-border text-[11px]">
+                                <span className="font-semibold px-2 py-0.5 rounded-badge bg-surface-muted text-secondary border border-border text-[11px]">
                                   {theme.count} items
                                 </span>
                               </div>
@@ -408,7 +408,7 @@ export default function DashboardPage() {
                             {/* Horizontal SVG Bar */}
                             <svg
                               viewBox="0 0 100 6"
-                              className="w-full h-2 rounded overflow-hidden bg-gray-100"
+                              className="w-full h-2 rounded overflow-hidden bg-surface-muted"
                               preserveAspectRatio="none"
                               aria-label={`Theme ${theme.name}: ${theme.count} items`}
                             >
@@ -417,7 +417,7 @@ export default function DashboardPage() {
                                 y="0"
                                 width={barWidthPercent}
                                 height="6"
-                                fill="#4f46e5"
+                                fill="var(--accent)"
                                 rx="3"
                               />
                             </svg>
@@ -449,7 +449,7 @@ export default function DashboardPage() {
                       <Link
                         key={fb.id}
                         href={`/feedback/${fb.id}`}
-                        className="block py-2.5 hover:bg-gray-50/70 -mx-4 px-4 transition-colors"
+                        className="block py-2.5 hover:bg-surface-muted/50 -mx-4 px-4 transition-colors"
                       >
                         <p className="text-xs font-normal text-primary line-clamp-2">{fb.text}</p>
                         <div className="flex items-center gap-2 mt-1.5">
