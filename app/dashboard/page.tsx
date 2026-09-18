@@ -34,7 +34,7 @@ interface RecentFeedbackItem {
   text: string;
   channel: string;
   sentiment: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' | 'MIXED' | null;
-  status: 'NEW' | 'REVIEWED' | 'ACTIONED';
+  status: 'NEW' | 'REVIEWED' | 'ACTIONED' | 'RESOLVED';
   createdAt: string;
 }
 

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { PlusIcon, ArrowUpTrayIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { AppShell } from '../../components/layout/AppShell';
 import { Button } from '../../components/ui/Button';
@@ -22,14 +22,14 @@ interface FeedbackItem {
   text: string;
   channel: string;
   sentiment: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' | 'MIXED' | null;
-  status: 'NEW' | 'REVIEWED' | 'ACTIONED';
+  status: 'NEW' | 'REVIEWED' | 'ACTIONED' | 'RESOLVED';
   featureArea?: string | null;
   createdAt: string;
   themes?: Array<{ theme: { id: string; name: string } }>;
 }
 
 function FeedbackInboxContent() {
-
+  const router = useRouter();
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const userRole = (session?.user as any)?.role || 'VIEWER';
@@ -263,6 +263,7 @@ function FeedbackInboxContent() {
                 { value: 'NEW', label: 'New' },
                 { value: 'REVIEWED', label: 'Reviewed' },
                 { value: 'ACTIONED', label: 'Actioned' },
+                { value: 'RESOLVED', label: 'Resolved' },
               ]}
               aria-label="Filter by status"
             />
@@ -336,7 +337,7 @@ function FeedbackInboxContent() {
                       key={item.id}
                       className="hover:bg-gray-50/70 transition-colors group cursor-pointer"
                       onClick={() => {
-                        window.location.href = `/feedback/${item.id}`;
+                        router.push(`/feedback/${item.id}`);
                       }}
                     >
                       <td className="py-3 px-4">

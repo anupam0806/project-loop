@@ -20,7 +20,7 @@ interface FeedbackDetail {
   channel: string;
   sentiment: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' | 'MIXED' | null;
   sentimentScore: number | null;
-  status: 'NEW' | 'REVIEWED' | 'ACTIONED';
+  status: 'NEW' | 'REVIEWED' | 'ACTIONED' | 'RESOLVED';
   featureArea: string | null;
   urgency: string | null;
   category: string | null;
@@ -186,19 +186,49 @@ export default function FeedbackDetailPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-primary">Status:</span>
                   {canEdit ? (
-                    <select
-                      value={feedback.status}
-                      disabled={updatingStatus}
-                      onChange={(e) => handleStatusChange(e.target.value)}
-                      className="px-2 py-1 text-xs bg-surface border border-border rounded-badge text-primary focus:ring-1 focus:ring-accent"
-                    >
-                      <option value="NEW">NEW</option>
-                      <option value="REVIEWED">REVIEWED</option>
-                      <option value="ACTIONED">ACTIONED</option>
-                    </select>
+                    <div className="inline-flex items-center gap-1.5 flex-wrap">
+                      <div className="inline-flex items-center p-0.5 bg-gray-100/90 border border-border rounded-badge gap-0.5 text-xs" role="group" aria-label="Status workflow">
+                        {(['NEW', 'REVIEWED', 'ACTIONED', 'RESOLVED'] as const).map((st) => {
+                          const isActive = feedback.status === st;
+                          return (
+                            <button
+                              key={st}
+                              type="button"
+                              disabled={updatingStatus}
+                              onClick={() => handleStatusChange(st)}
+                              className={`px-2 py-0.5 text-xs font-medium rounded-[4px] transition-colors ${
+                                isActive
+                                  ? st === 'RESOLVED'
+                                    ? 'bg-teal-700 text-white shadow-sm'
+                                    : st === 'ACTIONED'
+                                    ? 'bg-emerald-700 text-white shadow-sm'
+                                    : st === 'REVIEWED'
+                                    ? 'bg-purple-700 text-white shadow-sm'
+                                    : 'bg-blue-700 text-white shadow-sm'
+                                  : 'text-secondary hover:text-primary hover:bg-surface'
+                              } ${updatingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              {st === 'RESOLVED' ? '✓ RESOLVED' : st}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <select
+                        value={feedback.status}
+                        disabled={updatingStatus}
+                        onChange={(e) => handleStatusChange(e.target.value)}
+                        className="px-2 py-1 text-xs bg-surface border border-border rounded-badge text-primary focus:ring-1 focus:ring-accent"
+                        aria-label="Feedback status selection"
+                      >
+                        <option value="NEW">NEW</option>
+                        <option value="REVIEWED">REVIEWED</option>
+                        <option value="ACTIONED">ACTIONED</option>
+                        <option value="RESOLVED">RESOLVED</option>
+                      </select>
+                    </div>
                   ) : (
                     <Badge type="status" value={feedback.status} />
                   )}

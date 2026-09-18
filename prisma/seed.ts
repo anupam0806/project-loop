@@ -142,7 +142,7 @@ async function main() {
     const channels = ['SUPPORT', 'APP_REVIEW', 'SURVEY', 'SALES', 'SOCIAL', 'SIMULATED'] as const;
     const sentiments = ['POSITIVE', 'NEUTRAL', 'NEGATIVE', 'MIXED'] as const;
     const urgencies = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
-    const statuses = ['NEW', 'REVIEWED', 'ACTIONED'] as const;
+    const statuses = ['NEW', 'REVIEWED', 'ACTIONED', 'RESOLVED'] as const;
 
     for (let i = 0; i < 160; i++) {
       const pastDays = Math.floor(Math.random() * 90);
@@ -166,7 +166,8 @@ async function main() {
           sentimentScore,
           urgency,
           category: theme.name,
-          status,
+          featureArea: theme.name,
+          status: status as any,
           createdAt,
           classificationModel: 'seed-realistic-voc',
           classifiedAt: createdAt,
@@ -235,7 +236,8 @@ async function main() {
       statusCounts: {
         NEW: 80,
         REVIEWED: 50,
-        ACTIONED: 30,
+        ACTIONED: 20,
+        RESOLVED: 10,
       },
       topThemes: [
         { name: 'Usability', count: 32 },

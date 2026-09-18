@@ -33,7 +33,12 @@ export async function listFeedback(params: {
   if (channel) where.channel = channel;
   if (sentiment) where.sentiment = sentiment;
   if (status) where.status = status;
-  if (featureArea) where.featureArea = { contains: featureArea, mode: "insensitive" };
+  if (featureArea) {
+    where.OR = [
+      { featureArea: { contains: featureArea, mode: "insensitive" } },
+      { category: { contains: featureArea, mode: "insensitive" } },
+    ];
+  }
   const orderBy: any = {};
   const safeSortField = sort && ALLOWED_SORT_FIELDS[sort] ? ALLOWED_SORT_FIELDS[sort] : 'createdAt';
   orderBy[safeSortField] = order ?? 'desc';

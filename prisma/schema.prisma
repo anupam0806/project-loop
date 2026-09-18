@@ -30,6 +30,7 @@ enum FeedbackStatus {
   NEW
   REVIEWED
   ACTIONED
+  RESOLVED
 }
 
 enum Role {

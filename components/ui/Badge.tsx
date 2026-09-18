@@ -1,7 +1,8 @@
 import React from 'react';
+import { CheckCircleIcon } from '@heroicons/react/20/solid';
 
 type SentimentType = 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' | 'MIXED';
-type StatusType = 'NEW' | 'REVIEWED' | 'ACTIONED';
+type StatusType = 'NEW' | 'REVIEWED' | 'ACTIONED' | 'RESOLVED';
 type RoleType = 'ADMIN' | 'ANALYST' | 'VIEWER';
 
 interface BadgeProps {
@@ -58,13 +59,17 @@ export const Badge: React.FC<BadgeProps> = ({ type, value, className = '' }) => 
       NEW: 'bg-blue-50 text-blue-700 border-blue-200',
       REVIEWED: 'bg-purple-50 text-purple-700 border-purple-200',
       ACTIONED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      RESOLVED: 'bg-teal-50 text-teal-800 border-teal-300 font-medium',
     }[val] || 'bg-gray-100 text-secondary border-border';
 
     return (
       <span
-        className={`inline-flex items-center px-2 py-0.5 text-xs font-medium border rounded-badge ${styles} ${className}`}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium border rounded-badge ${styles} ${className}`}
       >
-        {val}
+        {val === 'RESOLVED' && (
+          <CheckCircleIcon className="w-3 h-3 text-teal-700 shrink-0" aria-hidden="true" />
+        )}
+        <span>{val}</span>
       </span>
     );
   }

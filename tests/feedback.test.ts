@@ -84,6 +84,14 @@ describe('Feedback CRUD', () => {
       expect(result.data.length).toBe(1);
     });
 
+    it('filters by status=RESOLVED', async () => {
+      const fb = await createFeedback(wsA, { text: 'Resolved item', channel: 'SUPPORT' });
+      await updateFeedback(wsA, fb.id, { status: 'RESOLVED' });
+      const result = await listFeedback({ workspaceId: wsA, page: 1, pageSize: 25, status: 'RESOLVED' });
+      expect(result.data.length).toBe(1);
+      expect(result.data[0].status).toBe('RESOLVED');
+    });
+
     it('searches by text (q parameter)', async () => {
       await createFeedback(wsA, { text: 'Checkout is slow', channel: 'SUPPORT' });
       await createFeedback(wsA, { text: 'Login is fine', channel: 'SUPPORT' });
@@ -175,6 +183,20 @@ describe('Status Transitions', () => {
     expect(updated!.status).toBe('ACTIONED');
   });
 
+  it('allows ACTIONED → RESOLVED', async () => {
+    const fb = await createFeedback(ws, { text: 'Action to resolve', channel: 'SUPPORT' });
+    await updateFeedback(ws, fb.id, { status: 'REVIEWED' });
+    await updateFeedback(ws, fb.id, { status: 'ACTIONED' });
+    const updated = await updateFeedback(ws, fb.id, { status: 'RESOLVED' });
+    expect(updated!.status).toBe('RESOLVED');
+  });
+
+  it('allows NEW → RESOLVED (skip)', async () => {
+    const fb = await createFeedback(ws, { text: 'Direct to resolve', channel: 'SUPPORT' });
+    const updated = await updateFeedback(ws, fb.id, { status: 'RESOLVED' });
+    expect(updated!.status).toBe('RESOLVED');
+  });
+
   it('allows REVIEWED → NEW (backward)', async () => {
     const fb = await createFeedback(ws, { text: 'Backward', channel: 'SALES' });
     await updateFeedback(ws, fb.id, { status: 'REVIEWED' });
@@ -196,6 +218,27 @@ describe('Status Transitions', () => {
     await updateFeedback(ws, fb.id, { status: 'ACTIONED' });
     const updated = await updateFeedback(ws, fb.id, { status: 'REVIEWED' });
     expect(updated!.status).toBe('REVIEWED');
+  });
+
+  it('allows RESOLVED → ACTIONED (backward)', async () => {
+    const fb = await createFeedback(ws, { text: 'Back from resolved', channel: 'SUPPORT' });
+    await updateFeedback(ws, fb.id, { status: 'RESOLVED' });
+    const updated = await updateFeedback(ws, fb.id, { status: 'ACTIONED' });
+    expect(updated!.status).toBe('ACTIONED');
+  });
+
+  it('allows RESOLVED → REVIEWED (backward)', async () => {
+    const fb = await createFeedback(ws, { text: 'Reopen to reviewed', channel: 'SUPPORT' });
+    await updateFeedback(ws, fb.id, { status: 'RESOLVED' });
+    const updated = await updateFeedback(ws, fb.id, { status: 'REVIEWED' });
+    expect(updated!.status).toBe('REVIEWED');
+  });
+
+  it('allows RESOLVED → NEW (backward)', async () => {
+    const fb = await createFeedback(ws, { text: 'Reopen to new', channel: 'SUPPORT' });
+    await updateFeedback(ws, fb.id, { status: 'RESOLVED' });
+    const updated = await updateFeedback(ws, fb.id, { status: 'NEW' });
+    expect(updated!.status).toBe('NEW');
   });
 
   it('allows update without changing status', async () => {

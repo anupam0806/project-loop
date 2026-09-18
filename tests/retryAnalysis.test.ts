@@ -77,10 +77,32 @@ describe('Retry Analysis & Status Decoupling', () => {
       expect(crossWorkspaceAttempt).toBeNull();
     });
 
+    it('successfully analyzes RESOLVED feedback and preserves RESOLVED status', async () => {
+      const fb = await createFeedback(wsA, {
+        text: 'The customer service team solved my problem instantly.',
+        channel: 'SUPPORT',
+      });
+      await updateFeedback(wsA, fb.id, { status: 'REVIEWED' });
+      await updateFeedback(wsA, fb.id, { status: 'ACTIONED' });
+      const resolved = await updateFeedback(wsA, fb.id, { status: 'RESOLVED' });
+      expect(resolved!.status).toBe('RESOLVED');
+
+      // Clear sentiment to simulate analysis retry
+      const store = (await import('./__mocks__/prisma')).getFeedbackStore();
+      const fbInStore = store.find((f: any) => f.id === fb.id);
+      fbInStore.sentiment = null;
+
+      const analyzed = await analyzeFeedback(wsA, fb.id);
+      expect(analyzed).not.toBeNull();
+      expect(analyzed!.status).toBe('RESOLVED');
+      expect(analyzed!.sentiment).toBe('POSITIVE');
+    });
+
     it('proves the status state machine rejects ANALYZING while allowing valid transitions', async () => {
       const fb = await createFeedback(wsA, { text: 'Testing status transition rejection', channel: 'SUPPORT' });
       await updateFeedback(wsA, fb.id, { status: 'REVIEWED' });
       await updateFeedback(wsA, fb.id, { status: 'ACTIONED' });
+      await updateFeedback(wsA, fb.id, { status: 'RESOLVED' });
 
       // Attempting to send { status: "ANALYZING" } must be rejected by Zod validation
       await expect(

@@ -77,7 +77,7 @@ export async function generateReport(
   let mixedCount = 0;
 
   const channelCounts: Record<string, number> = {};
-  const statusCounts: Record<string, number> = { NEW: 0, REVIEWED: 0, ACTIONED: 0 };
+  const statusCounts: Record<string, number> = { NEW: 0, REVIEWED: 0, ACTIONED: 0, RESOLVED: 0 };
   const themeCountsMap = new Map<string, { id: string; name: string; count: number }>();
 
   for (const fb of feedbacks) {
