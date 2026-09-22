@@ -6,12 +6,16 @@ import { AppError } from '../../../../utils/AppError';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
 
   try {
     const user = await requireRole('ADMIN', 'ANALYST', 'VIEWER');
     
-    const summary = await getAnalyticsSummary(user.workspaceId);
+    const url = new URL(request.url);
+    const rangeParam = url.searchParams.get('range') || url.searchParams.get('days');
+    const days = rangeParam === '7' ? 7 : rangeParam === '90' ? 90 : rangeParam === '30' ? 30 : undefined;
+
+    const summary = await getAnalyticsSummary(user.workspaceId, days);
 
     return NextResponse.json({
       data: summary

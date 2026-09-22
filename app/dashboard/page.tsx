@@ -39,18 +39,19 @@ interface RecentFeedbackItem {
 }
 
 export default function DashboardPage() {
+  const [range, setRange] = useState<7 | 30 | 90>(30);
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [recentFeedback, setRecentFeedback] = useState<RecentFeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboardData = useCallback(async (selectedRange: 7 | 30 | 90) => {
     setLoading(true);
     setError(null);
     try {
       const [analyticsRes, feedbackRes] = await Promise.all([
-        fetch('/api/analytics/summary'),
-        fetch('/api/feedback?page=1&pageSize=5'),
+        fetch(`/api/analytics/summary?range=${selectedRange}`),
+        fetch('/api/feedback?page=1&pageSize=50'),
       ]);
 
       if (!analyticsRes.ok) {
@@ -62,7 +63,12 @@ export default function DashboardPage() {
 
       if (feedbackRes.ok) {
         const feedbackJson = await feedbackRes.json();
-        setRecentFeedback(feedbackJson.data || []);
+        const allRecent: RecentFeedbackItem[] = feedbackJson.data || [];
+        const cutoff = new Date(Date.now() - selectedRange * 24 * 60 * 60 * 1000);
+        const filtered = allRecent
+          .filter((fb) => new Date(fb.createdAt) >= cutoff)
+          .slice(0, 5);
+        setRecentFeedback(filtered);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred while loading dashboard metrics.');
@@ -72,21 +78,80 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    fetchDashboardData();
+    let initialRange: 7 | 30 | 90 = 30;
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const r = params.get('range') || params.get('days');
+      if (r === '7' || r === '90') {
+        initialRange = Number(r) as 7 | 90;
+        setRange(initialRange);
+      }
+    }
+    fetchDashboardData(initialRange);
   }, [fetchDashboardData]);
+
+  const handleRangeChange = (newRange: 7 | 30 | 90) => {
+    if (newRange === range && !loading) return;
+    setRange(newRange);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (newRange === 30) {
+        url.searchParams.delete('range');
+        url.searchParams.delete('days');
+      } else {
+        url.searchParams.set('range', String(newRange));
+      }
+      window.history.replaceState(null, '', url.toString());
+    }
+    fetchDashboardData(newRange);
+  };
 
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-description">Overview of customer feedback and sentiment trends</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="page-title">Dashboard</h1>
+            <p className="page-description">Overview of customer feedback and sentiment trends</p>
+          </div>
+
+          {/* 7/30/90 Day Filter Segmented Control */}
+          <div
+            className="inline-flex items-center p-0.5 rounded-badge bg-surface-muted border border-border self-start sm:self-auto"
+            role="group"
+            aria-label="Date range filter"
+          >
+            {([7, 30, 90] as const).map((days) => (
+              <button
+                key={days}
+                type="button"
+                onClick={() => handleRangeChange(days)}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  range === days
+                    ? 'bg-surface text-primary shadow-sm font-semibold'
+                    : 'text-secondary hover:text-primary'
+                }`}
+                aria-pressed={range === days}
+              >
+                {days} Days
+              </button>
+            ))}
+          </div>
         </div>
 
         {loading && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Skeleton variant="card" count={4} />
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="p-4 bg-surface border border-border rounded-DEFAULT animate-pulse space-y-2.5"
+                >
+                  <div className="h-3.5 bg-surface-muted rounded w-1/3"></div>
+                  <div className="h-6 bg-surface-muted rounded w-2/3"></div>
+                  <div className="h-3 bg-surface-muted rounded w-1/2"></div>
+                </div>
+              ))}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Skeleton variant="chart" />
@@ -94,31 +159,28 @@ export default function DashboardPage() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Skeleton variant="chart" />
-              <Skeleton variant="row" count={4} />
+              <div className="p-4 bg-surface border border-border rounded-DEFAULT animate-pulse">
+                <Skeleton variant="row" count={4} />
+              </div>
             </div>
           </div>
         )}
 
         {error && !loading && (
-          <ErrorState message={error} onRetry={fetchDashboardData} />
+          <ErrorState message={error} onRetry={() => fetchDashboardData(range)} />
         )}
 
-        {!loading && !error && data && data.totalFeedback === 0 && (
-          <EmptyState
-            title="No feedback yet"
-            description="Your workspace has not received any feedback. Start by adding items or importing a CSV file."
-            action={
-              <Link href="/feedback">
-                <Button variant="primary" size="sm">
-                  Go to Feedback Inbox
-                </Button>
-              </Link>
-            }
-          />
-        )}
-
-        {!loading && !error && data && data.totalFeedback > 0 && (
+        {!loading && !error && data && (
           <>
+            {data.totalFeedback === 0 && (
+              <div className="p-3 bg-surface border border-border rounded-DEFAULT flex items-center justify-between text-xs">
+                <span className="text-secondary">No feedback recorded in the last {range} days.</span>
+                <Link href="/feedback" className="text-accent hover:underline font-medium">
+                  Add or import feedback &rarr;
+                </Link>
+              </div>
+            )}
+
             {/* 4 KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
@@ -128,7 +190,7 @@ export default function DashboardPage() {
                 <p className="text-2xl font-semibold text-primary mt-1">
                   {data.totalFeedback.toLocaleString()}
                 </p>
-                <span className="text-[11px] text-secondary mt-0.5 block">All ingested records</span>
+                <span className="text-[11px] text-secondary mt-0.5 block">Last {range} days</span>
               </Card>
 
               <Card>
@@ -174,182 +236,188 @@ export default function DashboardPage() {
               <Card>
                 <CardHeader
                   title="Feedback Volume Over Time"
-                  subtitle="Daily customer feedback counts (last 30 days)"
+                  subtitle={`Daily customer feedback counts (last ${range} days)`}
                 />
                 <div className="h-48 flex flex-col justify-between pt-2">
-                  {data.volumeOverTime && data.volumeOverTime.length > 0 ? (
-                    (() => {
-                      const timeline = data.volumeOverTime;
-                      const maxVal = Math.max(...timeline.map((v) => v.count), 1);
-                      const width = 460;
-                      const height = 132;
-                      const paddingX = 20;
-                      const paddingTop = 12;
-                      const paddingBottom = 26;
-                      const baselineY = height - paddingBottom;
-                      const usableW = width - paddingX * 2;
-                      const usableH = baselineY - paddingTop;
+                  {(() => {
+                    const timeline = data.volumeOverTime || [];
+                    const hasVolume = timeline.length > 0 && timeline.some((v) => v.count > 0);
 
-                      const formatShortDate = (dateStr: string): string => {
-                        if (!dateStr) return '';
-                        const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
-                        if (match) {
-                          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                          const month = months[parseInt(match[2], 10) - 1];
-                          const day = parseInt(match[3], 10);
-                          if (month && !isNaN(day)) return `${month} ${day}`;
-                        }
-                        const d = new Date(dateStr);
-                        if (!isNaN(d.getTime())) {
-                          return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                        }
-                        return dateStr;
-                      };
-
-                      const points = timeline.map((item, idx) => {
-                        const x =
-                          timeline.length > 1
-                            ? paddingX + (idx / (timeline.length - 1)) * usableW
-                            : width / 2;
-                        const y = baselineY - (item.count / maxVal) * usableH;
-                        return { x, y, ...item };
-                      });
-
-                      const pathData = points
-                        .map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`)
-                        .join(' ');
-                      const areaData = `${pathData} L ${points[points.length - 1].x.toFixed(1)} ${baselineY} L ${points[0].x.toFixed(1)} ${baselineY} Z`;
-
-                      // Select 5-6 evenly spaced tick points across the timeline (~every 5-7 days for 30d range)
-                      const tickTarget = timeline.length >= 20 ? 6 : Math.min(Math.max(timeline.length, 2), 5);
-                      const tickIndices = Array.from(
-                        new Set(
-                          Array.from({ length: tickTarget }, (_, i) =>
-                            Math.round((i * (timeline.length - 1)) / (tickTarget - 1))
-                          )
-                        )
-                      );
-                      const ticks = tickIndices.map((idx) => ({
-                        idx,
-                        x: points[idx].x,
-                        date: timeline[idx].date,
-                        label: formatShortDate(timeline[idx].date),
-                      }));
-
+                    if (!hasVolume || data.totalFeedback === 0) {
                       return (
-                        <div className="w-full">
-                          <svg
-                            viewBox={`0 0 ${width} ${height}`}
-                            className="w-full h-32 overflow-visible"
-                            preserveAspectRatio="none"
-                            aria-label="Feedback volume timeline chart"
-                          >
-                            <defs>
-                              <linearGradient id="volGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.25" />
-                                <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.0" />
-                              </linearGradient>
-                            </defs>
-                            {/* Horizontal Grid lines */}
-                            <line
-                              x1={paddingX}
-                              y1={paddingTop}
-                              x2={width - paddingX}
-                              y2={paddingTop}
-                              stroke="#e5e7eb"
-                              strokeDasharray="3 3"
-                            />
-                            <line
-                              x1={paddingX}
-                              y1={paddingTop + usableH / 2}
-                              x2={width - paddingX}
-                              y2={paddingTop + usableH / 2}
-                              stroke="#e5e7eb"
-                              strokeDasharray="3 3"
-                            />
-                            <line
-                              x1={paddingX}
-                              y1={baselineY}
-                              x2={width - paddingX}
-                              y2={baselineY}
-                              stroke="#e5e7eb"
-                            />
-
-                            {/* Filled Area */}
-                            <path d={areaData} fill="url(#volGrad)" />
-
-                            {/* Trend Line */}
-                            <path
-                              d={pathData}
-                              fill="none"
-                              stroke="#4f46e5"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-
-                            {/* Data Points */}
-                            {points.map((pt, idx) => (
-                              <circle
-                                key={idx}
-                                cx={pt.x}
-                                cy={pt.y}
-                                r="3"
-                                fill="#4f46e5"
-                                className="hover:r-5 transition-all cursor-pointer"
-                              >
-                                <title>{`${pt.date}: ${pt.count} feedback items`}</title>
-                              </circle>
-                            ))}
-
-                            {/* X-Axis Ticks & Date Labels */}
-                            <g aria-label="X-axis date labels">
-                              {ticks.map((tick, i) => {
-                                const textAnchor =
-                                  i === 0 ? 'start' : i === ticks.length - 1 ? 'end' : 'middle';
-                                const isDesktopOnly = ticks.length >= 5 && (i === 1 || i === 3);
-
-                                return (
-                                  <g
-                                    key={tick.idx}
-                                    className={isDesktopOnly ? 'hidden sm:inline' : undefined}
-                                  >
-                                    {/* Tick Mark */}
-                                    <line
-                                      x1={tick.x}
-                                      y1={baselineY}
-                                      x2={tick.x}
-                                      y2={baselineY + 4}
-                                      stroke="#e5e7eb"
-                                      strokeWidth="1"
-                                    />
-                                    {/* Date Label */}
-                                    <text
-                                      x={tick.x}
-                                      y={baselineY + 16}
-                                      textAnchor={textAnchor}
-                                      fill="currentColor"
-                                      className="text-secondary text-[10px] font-medium select-none"
-                                    >
-                                      {tick.label}
-                                    </text>
-                                  </g>
-                                );
-                              })}
-                            </g>
-                          </svg>
-
-                          <div className="flex justify-between text-[10px] text-secondary border-t border-border pt-1.5 mt-1">
-                            <span>{timeline[0]?.date || 'Older'}</span>
-                            <span className="text-secondary font-medium">Peak: {maxVal} items/day</span>
-                            <span>{timeline[timeline.length - 1]?.date || 'Recent'}</span>
-                          </div>
+                        <div className="h-full flex items-center justify-center">
+                          <p className="text-xs text-secondary">No feedback in this period</p>
                         </div>
                       );
-                    })()
-                  ) : (
-                    <p className="text-xs text-secondary text-center my-auto">No volume timeline available.</p>
-                  )}
+                    }
+
+                    const maxVal = Math.max(...timeline.map((v) => v.count), 1);
+                    const width = 460;
+                    const height = 132;
+                    const paddingX = 20;
+                    const paddingTop = 12;
+                    const paddingBottom = 26;
+                    const baselineY = height - paddingBottom;
+                    const usableW = width - paddingX * 2;
+                    const usableH = baselineY - paddingTop;
+
+                    const formatShortDate = (dateStr: string): string => {
+                      if (!dateStr) return '';
+                      const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                      if (match) {
+                        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        const month = months[parseInt(match[2], 10) - 1];
+                        const day = parseInt(match[3], 10);
+                        if (month && !isNaN(day)) return `${month} ${day}`;
+                      }
+                      const d = new Date(dateStr);
+                      if (!isNaN(d.getTime())) {
+                        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      }
+                      return dateStr;
+                    };
+
+                    const points = timeline.map((item, idx) => {
+                      const x =
+                        timeline.length > 1
+                          ? paddingX + (idx / (timeline.length - 1)) * usableW
+                          : width / 2;
+                      const y = baselineY - (item.count / maxVal) * usableH;
+                      return { x, y, ...item };
+                    });
+
+                    const pathData = points
+                      .map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`)
+                      .join(' ');
+                    const areaData = `${pathData} L ${points[points.length - 1].x.toFixed(1)} ${baselineY} L ${points[0].x.toFixed(1)} ${baselineY} Z`;
+
+                    // Select 5-6 evenly spaced tick points across the timeline (~every 5-7 days for 30d range)
+                    const tickTarget = timeline.length >= 20 ? 6 : Math.min(Math.max(timeline.length, 2), 5);
+                    const tickIndices = Array.from(
+                      new Set(
+                        Array.from({ length: tickTarget }, (_, i) =>
+                          Math.round((i * (timeline.length - 1)) / (tickTarget - 1))
+                        )
+                      )
+                    );
+                    const ticks = tickIndices.map((idx) => ({
+                      idx,
+                      x: points[idx].x,
+                      date: timeline[idx].date,
+                      label: formatShortDate(timeline[idx].date),
+                    }));
+
+                    return (
+                      <div className="w-full">
+                        <svg
+                          viewBox={`0 0 ${width} ${height}`}
+                          className="w-full h-32 overflow-visible"
+                          preserveAspectRatio="none"
+                          aria-label="Feedback volume timeline chart"
+                        >
+                          <defs>
+                            <linearGradient id="volGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.25" />
+                              <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.0" />
+                            </linearGradient>
+                          </defs>
+                          {/* Horizontal Grid lines */}
+                          <line
+                            x1={paddingX}
+                            y1={paddingTop}
+                            x2={width - paddingX}
+                            y2={paddingTop}
+                            stroke="#e5e7eb"
+                            strokeDasharray="3 3"
+                          />
+                          <line
+                            x1={paddingX}
+                            y1={paddingTop + usableH / 2}
+                            x2={width - paddingX}
+                            y2={paddingTop + usableH / 2}
+                            stroke="#e5e7eb"
+                            strokeDasharray="3 3"
+                          />
+                          <line
+                            x1={paddingX}
+                            y1={baselineY}
+                            x2={width - paddingX}
+                            y2={baselineY}
+                            stroke="#e5e7eb"
+                          />
+
+                          {/* Filled Area */}
+                          <path d={areaData} fill="url(#volGrad)" />
+
+                          {/* Trend Line */}
+                          <path
+                            d={pathData}
+                            fill="none"
+                            stroke="#4f46e5"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+
+                          {/* Data Points */}
+                          {points.map((pt, idx) => (
+                            <circle
+                              key={idx}
+                              cx={pt.x}
+                              cy={pt.y}
+                              r="3"
+                              fill="#4f46e5"
+                              className="hover:r-5 transition-all cursor-pointer"
+                            >
+                              <title>{`${pt.date}: ${pt.count} feedback items`}</title>
+                            </circle>
+                          ))}
+
+                          {/* X-Axis Ticks & Date Labels */}
+                          <g aria-label="X-axis date labels">
+                            {ticks.map((tick, i) => {
+                              const textAnchor =
+                                i === 0 ? 'start' : i === ticks.length - 1 ? 'end' : 'middle';
+                              const isDesktopOnly = ticks.length >= 5 && (i === 1 || i === 3);
+
+                              return (
+                                <g
+                                  key={tick.idx}
+                                  className={isDesktopOnly ? 'hidden sm:inline' : undefined}
+                                >
+                                  {/* Tick Mark */}
+                                  <line
+                                    x1={tick.x}
+                                    y1={baselineY}
+                                    x2={tick.x}
+                                    y2={baselineY + 4}
+                                    stroke="#e5e7eb"
+                                    strokeWidth="1"
+                                  />
+                                  {/* Date Label */}
+                                  <text
+                                    x={tick.x}
+                                    y={baselineY + 16}
+                                    textAnchor={textAnchor}
+                                    fill="currentColor"
+                                    className="text-secondary text-[10px] font-medium select-none"
+                                  >
+                                    {tick.label}
+                                  </text>
+                                </g>
+                              );
+                            })}
+                          </g>
+                        </svg>
+
+                        <div className="flex justify-between text-[10px] text-secondary border-t border-border pt-1.5 mt-1">
+                          <span>{timeline[0]?.date || 'Older'}</span>
+                          <span className="text-secondary font-medium">Peak: {maxVal} items/day</span>
+                          <span>{timeline[timeline.length - 1]?.date || 'Recent'}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </Card>
 
@@ -360,78 +428,91 @@ export default function DashboardPage() {
                   subtitle="Overall customer feeling across all items"
                 />
                 <div className="h-48 flex flex-col justify-between pt-2">
-                  {/* SVG Stacked Bar Visual */}
-                  <div className="w-full">
-                    <svg
-                      viewBox="0 0 400 32"
-                      className="w-full h-8 rounded overflow-hidden"
-                      preserveAspectRatio="none"
-                      aria-label="Sentiment distribution chart"
-                    >
-                      {(() => {
-                        const total =
-                          data.positivePercentage +
-                          data.neutralPercentage +
-                          data.mixedPercentage +
-                          data.negativePercentage;
-                        const scale = total > 0 ? 400 / total : 1;
-                        let currentX = 0;
+                  {(() => {
+                    const total =
+                      data.positivePercentage +
+                      data.neutralPercentage +
+                      data.mixedPercentage +
+                      data.negativePercentage;
 
-                        const segments = [
-                          { key: 'pos', name: 'Positive', pct: data.positivePercentage, fill: '#16a34a' },
-                          { key: 'neu', name: 'Neutral', pct: data.neutralPercentage, fill: '#9ca3af' },
-                          { key: 'mix', name: 'Mixed', pct: data.mixedPercentage, fill: '#d97706' },
-                          { key: 'neg', name: 'Negative', pct: data.negativePercentage, fill: '#dc2626' },
-                        ];
+                    if (total <= 0 || data.totalFeedback === 0) {
+                      return (
+                        <div className="h-full flex items-center justify-center">
+                          <p className="text-xs text-secondary">No feedback in this period</p>
+                        </div>
+                      );
+                    }
 
-                        return segments.map((seg) => {
-                          const segWidth = seg.pct * scale;
-                          const rect = (
-                            <rect
-                              key={seg.key}
-                              x={currentX}
-                              y={0}
-                              width={segWidth}
-                              height={32}
-                              fill={seg.fill}
-                            >
-                              <title>{`${seg.name}: ${seg.pct.toFixed(1)}%`}</title>
-                            </rect>
-                          );
-                          currentX += segWidth;
-                          return rect;
-                        });
-                      })()}
-                    </svg>
-                  </div>
+                    const scale = total > 0 ? 400 / total : 1;
+                    let currentX = 0;
 
-                  {/* Accessible Legend with Symbols (Never color alone) */}
-                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-border mt-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-positive inline-block" />
-                      <span className="font-bold text-positive">[+]</span>
-                      <span className="text-secondary">Positive:</span>
-                      <strong className="text-primary font-semibold">{data.positivePercentage.toFixed(1)}%</strong>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-negative inline-block" />
-                      <span className="font-bold text-negative">[-]</span>
-                      <span className="text-secondary">Negative:</span>
-                      <strong className="text-primary font-semibold">{data.negativePercentage.toFixed(1)}%</strong>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-neutralSentiment inline-block" />
-                      <span className="font-bold text-neutralSentiment">[○]</span>
-                      <span className="text-secondary">Neutral:</span>
-                      <strong className="text-primary font-semibold">{data.neutralPercentage.toFixed(1)}%</strong>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-warning inline-block" />
-                      <span className="font-bold text-warning">[~]</span>
-                      <span className="text-secondary">Mixed:</span>
-                      <strong className="text-primary font-semibold">{data.mixedPercentage.toFixed(1)}%</strong>
-                    </div>
-                  </div>
+                    const segments = [
+                      { key: 'pos', name: 'Positive', pct: data.positivePercentage, fill: '#16a34a' },
+                      { key: 'neu', name: 'Neutral', pct: data.neutralPercentage, fill: '#9ca3af' },
+                      { key: 'mix', name: 'Mixed', pct: data.mixedPercentage, fill: '#d97706' },
+                      { key: 'neg', name: 'Negative', pct: data.negativePercentage, fill: '#dc2626' },
+                    ];
+
+                    return (
+                      <>
+                        {/* SVG Stacked Bar Visual */}
+                        <div className="w-full">
+                          <svg
+                            viewBox="0 0 400 32"
+                            className="w-full h-8 rounded overflow-hidden"
+                            preserveAspectRatio="none"
+                            aria-label="Sentiment distribution chart"
+                          >
+                            {segments.map((seg) => {
+                              const segWidth = seg.pct * scale;
+                              const rect = (
+                                <rect
+                                  key={seg.key}
+                                  x={currentX}
+                                  y={0}
+                                  width={segWidth}
+                                  height={32}
+                                  fill={seg.fill}
+                                >
+                                  <title>{`${seg.name}: ${seg.pct.toFixed(1)}%`}</title>
+                                </rect>
+                              );
+                              currentX += segWidth;
+                              return rect;
+                            })}
+                          </svg>
+                        </div>
+
+                        {/* Accessible Legend with Symbols (Never color alone) */}
+                        <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-border mt-2">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-positive inline-block" />
+                            <span className="font-bold text-positive">[+]</span>
+                            <span className="text-secondary">Positive:</span>
+                            <strong className="text-primary font-semibold">{data.positivePercentage.toFixed(1)}%</strong>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-negative inline-block" />
+                            <span className="font-bold text-negative">[-]</span>
+                            <span className="text-secondary">Negative:</span>
+                            <strong className="text-primary font-semibold">{data.negativePercentage.toFixed(1)}%</strong>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-neutralSentiment inline-block" />
+                            <span className="font-bold text-neutralSentiment">[○]</span>
+                            <span className="text-secondary">Neutral:</span>
+                            <strong className="text-primary font-semibold">{data.neutralPercentage.toFixed(1)}%</strong>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-warning inline-block" />
+                            <span className="font-bold text-warning">[~]</span>
+                            <span className="text-secondary">Mixed:</span>
+                            <strong className="text-primary font-semibold">{data.mixedPercentage.toFixed(1)}%</strong>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </Card>
             </div>
@@ -450,54 +531,61 @@ export default function DashboardPage() {
                   }
                 />
                 <div className="space-y-3 pt-2">
-                  {data.topThemes && data.topThemes.length > 0 ? (
-                    (() => {
-                      const maxThemeCount = Math.max(...data.topThemes.map((t) => t.count), 1);
-                      return data.topThemes.map((theme) => {
-                        const barWidthPercent = Math.max((theme.count / maxThemeCount) * 100, 4);
-                        const pctOfTotal = data.totalFeedback > 0
-                          ? ((theme.count / data.totalFeedback) * 100).toFixed(0)
-                          : '0';
+                  {(() => {
+                    const themes = data.topThemes || [];
+                    const hasThemes = themes.length > 0 && themes.some((t) => t.count > 0);
 
-                        return (
-                          <div key={theme.id || theme.name} className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <Link
-                                href={`/feedback?theme=${encodeURIComponent(theme.name)}`}
-                                className="font-medium text-primary hover:text-accent transition-colors truncate max-w-[200px]"
-                              >
-                                {theme.name}
-                              </Link>
-                              <div className="flex items-center gap-2">
-                                <span className="text-secondary text-[11px]">{pctOfTotal}% of total</span>
-                                <span className="font-semibold px-2 py-0.5 rounded-badge bg-surface-muted text-secondary border border-border text-[11px]">
-                                  {theme.count} items
-                                </span>
-                              </div>
-                            </div>
-                            {/* Horizontal SVG Bar */}
-                            <svg
-                              viewBox="0 0 100 6"
-                              className="w-full h-2 rounded overflow-hidden bg-surface-muted"
-                              preserveAspectRatio="none"
-                              aria-label={`Theme ${theme.name}: ${theme.count} items`}
+                    if (!hasThemes || data.totalFeedback === 0) {
+                      return (
+                        <div className="py-8 flex items-center justify-center">
+                          <p className="text-xs text-secondary">No feedback in this period</p>
+                        </div>
+                      );
+                    }
+
+                    const maxThemeCount = Math.max(...themes.map((t) => t.count), 1);
+                    return themes.map((theme) => {
+                      const barWidthPercent = Math.max((theme.count / maxThemeCount) * 100, 4);
+                      const pctOfTotal = data.totalFeedback > 0
+                        ? ((theme.count / data.totalFeedback) * 100).toFixed(0)
+                        : '0';
+
+                      return (
+                        <div key={theme.id || theme.name} className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <Link
+                              href={`/feedback?theme=${encodeURIComponent(theme.name)}`}
+                              className="font-medium text-primary hover:text-accent transition-colors truncate max-w-[200px]"
                             >
-                              <rect
-                                x="0"
-                                y="0"
-                                width={barWidthPercent}
-                                height="6"
-                                fill="var(--accent)"
-                                rx="3"
-                              />
-                            </svg>
+                              {theme.name}
+                            </Link>
+                            <div className="flex items-center gap-2">
+                              <span className="text-secondary text-[11px]">{pctOfTotal}% of total</span>
+                              <span className="font-semibold px-2 py-0.5 rounded-badge bg-surface-muted text-secondary border border-border text-[11px]">
+                                {theme.count} items
+                              </span>
+                            </div>
                           </div>
-                        );
-                      });
-                    })()
-                  ) : (
-                    <p className="text-xs text-secondary py-4 text-center">No themes detected yet.</p>
-                  )}
+                          {/* Horizontal SVG Bar */}
+                          <svg
+                            viewBox="0 0 100 6"
+                            className="w-full h-2 rounded overflow-hidden bg-surface-muted"
+                            preserveAspectRatio="none"
+                            aria-label={`Theme ${theme.name}: ${theme.count} items`}
+                          >
+                            <rect
+                              x="0"
+                              y="0"
+                              width={barWidthPercent}
+                              height="6"
+                              fill="var(--accent)"
+                              rx="3"
+                            />
+                          </svg>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </Card>
 
@@ -532,7 +620,9 @@ export default function DashboardPage() {
                       </Link>
                     ))
                   ) : (
-                    <p className="text-xs text-secondary py-4 text-center">No feedback submissions found.</p>
+                    <div className="py-8 flex items-center justify-center">
+                      <p className="text-xs text-secondary">No feedback in this period</p>
+                    </div>
                   )}
                 </div>
               </Card>
