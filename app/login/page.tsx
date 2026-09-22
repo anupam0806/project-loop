@@ -92,6 +92,48 @@ export default function LoginPage() {
           </Button>
         </form>
 
+        <div className="p-3 bg-surface-muted border border-border rounded-DEFAULT space-y-2.5 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-primary">Demo access</span>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('admin@example.com');
+                setPassword('password123');
+                setError(null);
+              }}
+              className="text-accent hover:underline font-medium focus:outline-none"
+            >
+              Use admin demo
+            </button>
+          </div>
+
+          <div className="space-y-1.5">
+            {[
+              { role: 'Admin', email: 'admin@example.com', password: 'password123' },
+              { role: 'Analyst', email: 'analyst@example.com', password: 'password123' },
+              { role: 'Viewer', email: 'viewer@example.com', password: 'password123' },
+            ].map((acc) => (
+              <button
+                key={acc.role}
+                type="button"
+                onClick={() => {
+                  setEmail(acc.email);
+                  setPassword(acc.password);
+                  setError(null);
+                }}
+                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-badge bg-surface border border-border hover:border-accent/40 text-left transition-colors focus:outline-none focus:ring-1 focus:ring-accent"
+                title={`Click to fill ${acc.role} credentials`}
+              >
+                <span className="text-secondary">
+                  <span className="font-medium text-primary">{acc.role}:</span> {acc.email}
+                </span>
+                <span className="font-mono text-secondary/70 text-[11px]">{acc.password}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="pt-2 text-center text-xs text-secondary border-t border-border">
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="text-accent hover:underline font-medium">
