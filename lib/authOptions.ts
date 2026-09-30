@@ -39,24 +39,32 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async session({ session, token }) {
-      if (session.user && token.sub) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.sub },
-        });
-        if (dbUser) {
-          session.user.id = dbUser.id;
-          session.user.role = dbUser.role;
-          session.user.workspaceId = dbUser.workspaceId;
-        }
-      }
-      return session;
-    },
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
+        token.role = (user as any).role;
+        token.workspaceId = (user as any).workspaceId;
       }
       return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
+        if (token.role && token.workspaceId) {
+          session.user.role = token.role as string;
+          session.user.workspaceId = token.workspaceId as string;
+        } else {
+          // Fallback to database query only if fields are missing from token
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.sub },
+          });
+          if (dbUser) {
+            session.user.role = dbUser.role;
+            session.user.workspaceId = dbUser.workspaceId;
+          }
+        }
+      }
+      return session;
     },
   },
   secret: process.env.NEXTAUTH_SECRET || "project-loop-fallback-secret-2026-auth-session-key",

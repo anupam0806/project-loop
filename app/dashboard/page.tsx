@@ -51,7 +51,7 @@ export default function DashboardPage() {
     try {
       const [analyticsRes, feedbackRes] = await Promise.all([
         fetch(`/api/analytics/summary?range=${selectedRange}`),
-        fetch('/api/feedback?page=1&pageSize=50'),
+        fetch('/api/feedback?page=1&pageSize=15'),
       ]);
 
       if (!analyticsRes.ok) {

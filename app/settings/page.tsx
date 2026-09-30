@@ -23,6 +23,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { Dialog } from '../../components/ui/Dialog';
 import { ThemeSwitch } from '../../components/ui/ThemeSwitch';
+import { setCachedWorkspaceName } from '../../lib/workspaceClient';
 import { useTheme } from '../../components/ThemeProvider';
 
 interface WorkspaceInfo {
@@ -79,6 +80,9 @@ export default function SettingsPage() {
       if (!wsRes.ok) throw new Error('Failed to retrieve workspace details.');
       const wsJson = await wsRes.json();
       setWorkspace(wsJson.data);
+      if (wsJson.data?.name) {
+        setCachedWorkspaceName(wsJson.data.name);
+      }
 
       if (isAdmin) {
         const usersRes = await fetch('/api/workspace/users');

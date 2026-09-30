@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Badge } from '../ui/Badge';
 import { ThemeSwitch } from '../ui/ThemeSwitch';
+import { getClientWorkspaceName } from '../../lib/workspaceClient';
 
 interface SidebarProps {
   onCloseMobile?: () => void;
@@ -26,21 +27,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile, workspaceName: 
 
   const [workspaceName, setWorkspaceName] = useState<string>(propWorkspaceName || '');
 
-  // Keep workspaceName in sync with prop or fetch dynamically from API
+  // Keep workspaceName in sync with prop or fetch from deduplicated client cache
   useEffect(() => {
     if (propWorkspaceName) {
       setWorkspaceName(propWorkspaceName);
     } else if (session?.user) {
-      fetch('/api/workspace')
-        .then((res) => res.json())
-        .then((data) => {
-          if (data?.data?.name) {
-            setWorkspaceName(data.data.name);
-          }
-        })
-        .catch(() => {});
+      getClientWorkspaceName().then((name) => {
+        if (name) setWorkspaceName(name);
+      });
     }
-  }, [propWorkspaceName, session]);
+  }, [propWorkspaceName, session?.user?.email]);
 
   const userRole = (session?.user as any)?.role || 'VIEWER';
   const userName = session?.user?.name || session?.user?.email?.split('@')[0] || 'User';

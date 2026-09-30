@@ -8,6 +8,7 @@ import { Sidebar } from './Sidebar';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { ThemeSwitch } from '../ui/ThemeSwitch';
+import { getClientWorkspaceName } from '../../lib/workspaceClient';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -27,16 +28,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
   useEffect(() => {
     if (session?.user) {
-      fetch('/api/workspace')
-        .then((res) => res.json())
-        .then((data) => {
-          if (data?.data?.name) {
-            setWorkspaceName(data.data.name);
-          }
-        })
-        .catch(() => {});
+      getClientWorkspaceName().then((name) => {
+        if (name) setWorkspaceName(name);
+      });
     }
-  }, [session]);
+  }, [session?.user?.email]);
 
   const userRole = (session?.user as any)?.role || 'VIEWER';
   const userName = session?.user?.name || session?.user?.email || 'User';
