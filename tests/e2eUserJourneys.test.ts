@@ -221,7 +221,7 @@ describe('Phase 5.6: End-to-End User Journeys', () => {
       expect(summary.totalFeedback).toBe(4);
       expect(summary.positivePercentage).toBe(50); // 2/4 = 50%
       expect(summary.negativePercentage).toBe(25); // 1/4 = 25%
-      expect(summary.actionableFeedback).toBe(0); // Unresolved fallback indicator
+      expect(summary.actionableFeedback).toBe(3); // 3 items with status NEW / REVIEWED
 
       // 3 Charts Datasets
       // Chart 1: Volume over time (daily counts)

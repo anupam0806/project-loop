@@ -7,15 +7,16 @@ const themeCreateSchema = z.object({
 });
 
 export async function listThemes(workspaceId: string) {
-  const themes = await prisma.theme.findMany({
-    where: { workspaceId },
-    select: { id: true, name: true, description: true, createdAt: true },
-  });
-
-  const feedbackThemes = await prisma.feedbackTheme.findMany({
-    where: { theme: { workspaceId } },
-    include: { feedback: { select: { sentiment: true } } },
-  }).catch(() => []);
+  const [themes, feedbackThemes] = await Promise.all([
+    prisma.theme.findMany({
+      where: { workspaceId },
+      select: { id: true, name: true, description: true, createdAt: true },
+    }),
+    prisma.feedbackTheme.findMany({
+      where: { theme: { workspaceId } },
+      include: { feedback: { select: { sentiment: true } } },
+    }).catch(() => []),
+  ]);
 
   return themes.map(t => {
     const matched = feedbackThemes.filter((ft: any) => ft.themeId === t.id);

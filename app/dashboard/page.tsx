@@ -218,12 +218,12 @@ export default function DashboardPage() {
                   Actionable Count
                 </span>
                 <p className="text-2xl font-semibold text-secondary mt-1">
-                  {typeof data.actionableFeedback === 'number' && data.actionableFeedback > 0
+                  {typeof data.actionableFeedback === 'number'
                     ? data.actionableFeedback.toLocaleString()
                     : '—'}
                 </p>
                 <span className="text-[11px] text-secondary mt-0.5 block">
-                  {typeof data.actionableFeedback === 'number' && data.actionableFeedback > 0
+                  {typeof data.actionableFeedback === 'number'
                     ? 'Items needing review'
                     : 'Not calculated'}
                 </span>

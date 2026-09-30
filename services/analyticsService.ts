@@ -6,22 +6,79 @@ export async function getAnalyticsSummary(workspaceId: string, days?: number) {
   if (startDate) {
     feedbackWhere.createdAt = { gte: startDate };
   }
-
-  // Deterministic count calculations
-  const totalFeedback = await prisma.feedback.count({
-    where: feedbackWhere
-  });
-
   const sentimentWhere: any = { workspaceId, sentiment: { not: null } };
   if (startDate) {
     sentimentWhere.createdAt = { gte: startDate };
   }
 
-  const sentiments = await prisma.feedback.groupBy({
-    by: ['sentiment'],
-    where: sentimentWhere,
-    _count: { _all: true },
-  });
+  // Run independent database queries in parallel to minimize response latency
+  const [
+    totalFeedback,
+    actionableFeedback,
+    sentiments,
+    volumeByDate,
+    sentimentByDate,
+    topThemesRaw,
+  ] = await Promise.all([
+    prisma.feedback.count({
+      where: feedbackWhere,
+    }),
+    prisma.feedback.count({
+      where: {
+        ...feedbackWhere,
+        status: { in: ['NEW', 'REVIEWED'] },
+      },
+    }),
+    prisma.feedback.groupBy({
+      by: ['sentiment'],
+      where: sentimentWhere,
+      _count: { _all: true },
+    }),
+    startDate ? prisma.$queryRaw<Array<{ date: string; count: bigint }>>`
+      SELECT DATE("createdAt") as date, COUNT(*) as count
+      FROM "Feedback"
+      WHERE "workspaceId" = ${workspaceId} AND "createdAt" >= ${startDate}
+      GROUP BY DATE("createdAt")
+      ORDER BY date ASC
+      LIMIT ${days || 30};
+    ` : prisma.$queryRaw<Array<{ date: string; count: bigint }>>`
+      SELECT DATE("createdAt") as date, COUNT(*) as count
+      FROM "Feedback"
+      WHERE "workspaceId" = ${workspaceId}
+      GROUP BY DATE("createdAt")
+      ORDER BY date ASC
+      LIMIT 30;
+    `,
+    startDate ? prisma.$queryRaw<Array<{ date: string; sentiment: string; count: bigint }>>`
+      SELECT DATE("createdAt") as date, sentiment, COUNT(*) as count
+      FROM "Feedback"
+      WHERE "workspaceId" = ${workspaceId} AND sentiment IS NOT NULL AND "createdAt" >= ${startDate}
+      GROUP BY DATE("createdAt"), sentiment
+      ORDER BY date ASC
+      LIMIT ${(days || 30) * 4};
+    ` : prisma.$queryRaw<Array<{ date: string; sentiment: string; count: bigint }>>`
+      SELECT DATE("createdAt") as date, sentiment, COUNT(*) as count
+      FROM "Feedback"
+      WHERE "workspaceId" = ${workspaceId} AND sentiment IS NOT NULL
+      GROUP BY DATE("createdAt"), sentiment
+      ORDER BY date ASC
+      LIMIT 120;
+    `,
+    prisma.theme.findMany({
+      where: { workspaceId },
+      include: {
+        _count: {
+          select: { feedbacks: true },
+        },
+      },
+      orderBy: {
+        feedbacks: {
+          _count: 'desc',
+        },
+      },
+      take: 5,
+    }),
+  ]);
 
   let positiveCount = 0, negativeCount = 0, neutralCount = 0, mixedCount = 0;
   for (const s of sentiments) {
@@ -32,57 +89,6 @@ export async function getAnalyticsSummary(workspaceId: string, days?: number) {
   }
 
   const sentimentTotal = positiveCount + negativeCount + neutralCount + mixedCount;
-
-  // Actionable feedback calculation is explicitly UNRESOLVED and thus omitted or returned as 0/null
-  const actionableFeedback = 0; 
-
-  const volumeByDate = startDate ? await prisma.$queryRaw<Array<{ date: string; count: bigint }>>`
-    SELECT DATE("createdAt") as date, COUNT(*) as count
-    FROM "Feedback"
-    WHERE "workspaceId" = ${workspaceId} AND "createdAt" >= ${startDate}
-    GROUP BY DATE("createdAt")
-    ORDER BY date ASC
-    LIMIT ${days || 30};
-  ` : await prisma.$queryRaw<Array<{ date: string; count: bigint }>>`
-    SELECT DATE("createdAt") as date, COUNT(*) as count
-    FROM "Feedback"
-    WHERE "workspaceId" = ${workspaceId}
-    GROUP BY DATE("createdAt")
-    ORDER BY date ASC
-    LIMIT 30;
-  `;
-
-  // Sentiment over time
-  const sentimentByDate = startDate ? await prisma.$queryRaw<Array<{ date: string; sentiment: string; count: bigint }>>`
-    SELECT DATE("createdAt") as date, sentiment, COUNT(*) as count
-    FROM "Feedback"
-    WHERE "workspaceId" = ${workspaceId} AND sentiment IS NOT NULL AND "createdAt" >= ${startDate}
-    GROUP BY DATE("createdAt"), sentiment
-    ORDER BY date ASC
-    LIMIT ${(days || 30) * 4};
-  ` : await prisma.$queryRaw<Array<{ date: string; sentiment: string; count: bigint }>>`
-    SELECT DATE("createdAt") as date, sentiment, COUNT(*) as count
-    FROM "Feedback"
-    WHERE "workspaceId" = ${workspaceId} AND sentiment IS NOT NULL
-    GROUP BY DATE("createdAt"), sentiment
-    ORDER BY date ASC
-    LIMIT 120;
-  `;
-
-  const topThemesRaw = await prisma.theme.findMany({
-    where: { workspaceId },
-    include: {
-      _count: {
-        select: { feedbacks: true }
-      }
-    },
-    orderBy: {
-      feedbacks: {
-        _count: 'desc'
-      }
-    },
-    take: 5
-  });
 
   let topThemes = topThemesRaw.map(t => ({
     id: t.id,

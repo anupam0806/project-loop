@@ -253,7 +253,7 @@ describe('Phase 5.5: Dashboard 3-Chart & KPI Data Compliance', () => {
     expect(summary.totalFeedback).toBe(2);
     expect(summary.positivePercentage).toBe(50);
     expect(summary.negativePercentage).toBe(50);
-    expect(summary.actionableFeedback).toBe(0); // Unresolved / non-misleading fallback
+    expect(summary.actionableFeedback).toBe(2);
 
     // 3-Chart Datasets
     // Chart 1: Volume Timeline

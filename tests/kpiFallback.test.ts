@@ -8,7 +8,7 @@ describe('Actionable Feedback KPI Fallback Behavior', () => {
     resetStores();
   });
 
-  it('preserves actionable feedback as uncalculated and ensures fallback behavior', async () => {
+  it('computes actionable feedback and verifies UI formatting rules', async () => {
     const ws = 'ws-kpi-test';
     await mockPrisma.feedback.create({
       data: {
@@ -22,17 +22,38 @@ describe('Actionable Feedback KPI Fallback Behavior', () => {
 
     const summary = await getAnalyticsSummary(ws);
 
-    // Backend provides 0 or unresolved representation
-    expect(summary.actionableFeedback).toBe(0);
+    // Backend provides real count for NEW / REVIEWED status
+    expect(summary.actionableFeedback).toBe(1);
 
     // Formatter logic applied in Dashboard UI:
-    // When actionableFeedback is undefined, 0, or not calculated, UI displays "—"
-    const renderKpiValue = (val: number | undefined) => {
-      // Constraint: Do not present a misleading numeric value for actionableFeedback.
-      // If the value is undefined, unavailable, or currently represented as 0 without a real calculation, display '—'.
-      return '—';
+    // If actionableFeedback is a number, always show it (including 0)
+    // Only show "—" / "Not calculated" if null/undefined
+    const renderKpi = (val: number | null | undefined) => {
+      const displayValue = typeof val === 'number' ? val.toLocaleString() : '—';
+      const subtitle = typeof val === 'number' ? 'Items needing review' : 'Not calculated';
+      return { displayValue, subtitle };
     };
 
-    expect(renderKpiValue(summary.actionableFeedback)).toBe('—');
+    // When calculated with count = 1
+    expect(renderKpi(summary.actionableFeedback)).toEqual({
+      displayValue: '1',
+      subtitle: 'Items needing review',
+    });
+
+    // When calculated with count = 0
+    expect(renderKpi(0)).toEqual({
+      displayValue: '0',
+      subtitle: 'Items needing review',
+    });
+
+    // When null or undefined
+    expect(renderKpi(undefined)).toEqual({
+      displayValue: '—',
+      subtitle: 'Not calculated',
+    });
+    expect(renderKpi(null)).toEqual({
+      displayValue: '—',
+      subtitle: 'Not calculated',
+    });
   });
 });

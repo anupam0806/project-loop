@@ -57,6 +57,10 @@ function matchesWhere(item: any, where: any): boolean {
         if (item[key] === condition.not) return false;
         continue;
       }
+      if ('in' in condition) {
+        if (!Array.isArray(condition.in) || !condition.in.includes(item[key])) return false;
+        continue;
+      }
       if ('gte' in condition || 'lte' in condition || 'gt' in condition || 'lt' in condition) {
         const itemVal = item[key] instanceof Date ? item[key].getTime() : item[key];
         if ('gte' in condition) {
